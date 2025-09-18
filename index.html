@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>日別成績表示</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="search-area">
+  <div id="search-inputs">
+    <input type="date" id="date-input" />
+    <input type="text" id="name-input" placeholder="名前を入力してねっ" />
+    <button id="search-button">検索</button>
+  </div>
+  <p id="status-message"></p>
+</div>
+
+<div id="results" style="display:none;">
+  <h2 id="date-display"></h2>
+  <p id="member-info"></p>
+
+  <div class="box"><h3>日別成績</h3></div>
+  <div id="stats-table" class="table"></div>
+
+  <div class="box"><h3>ランキング</h3></div>
+  <div id="ranking-table" class="table"></div>
+
+  <div class="box"><h3>スコアデータ</h3></div>
+  <div id="score-table" class="table"></div>
+  <canvas id="bar-chart"></canvas>
+
+  <div class="box"><h3>着順円グラフ</h3></div>
+  <canvas id="pie-chart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
