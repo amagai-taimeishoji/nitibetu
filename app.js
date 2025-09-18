@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxvFHD6rC740FlwMZThJszdiSTAH3RQ9YCDL2daOaBY_qPMi_aqBWIWCoTNmekaYWUN/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwj8CUbEvXLywqK2R3VxiYi-BBqn1pOs2aFiuTmGlGggUHV53-TAUpx4W7O0-335w_a/exec";
 
 let barChartInstance = null;
 let pieChartInstance = null;
@@ -120,4 +120,5 @@ function createPieChart(data){
     options:{responsive:true, maintainAspectRatio:true}
   });
 }
+
 
