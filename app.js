@@ -1,139 +1,136 @@
-// =====================
-// スプレッドシートID設定
-// =====================
-const SPREADSHEET_ID = "https://script.google.com/macros/s/AKfycbyTsGKw1iVwcxk2Ri4InCJwtdJuYijKb8G2D8fLpWdfyKaPpcSL4MvkW_7J2g5sQRfw/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbyTsGKw1iVwcxk2Ri4InCJwtdJuYijKb8G2D8fLpWdfyKaPpcSL4MvkW_7J2g5sQRfw/exec"; // デプロイしたGAS WebアプリのURL
 
-// Webアプリ用
-function doGet(e) {
-  const name = e.parameter.name;
-  const year = e.parameter.year;
-  const month = e.parameter.month;
-  const dateStr = e.parameter.date; // "2025/10/18" 形式
+const yearSelect = document.getElementById("year-select");
+const monthSelect = document.getElementById("month-select");
+const daySelect = document.getElementById("day-select");
+const current = new Date();
+for(let y=2025;y<=current.getFullYear()+1;y++){
+  const opt = document.createElement("option"); opt.value=y; opt.textContent=y; yearSelect.appendChild(opt);
+}
+yearSelect.value = current.getFullYear();
+for(let m=1;m<=12;m++){
+  const opt = document.createElement("option"); opt.value=m; opt.textContent=`${m}月`; monthSelect.appendChild(opt);
+}
+monthSelect.value = current.getMonth()+1;
 
-  if (!name || !year || !month || !dateStr) {
-    return ContentService.createTextOutput(JSON.stringify({error:"パラメータ不足"})).setMimeType(ContentService.MimeType.JSON);
+function populateDays(){
+  daySelect.innerHTML = "";
+  const y = Number(yearSelect.value);
+  const m = Number(monthSelect.value);
+  const lastDay = new Date(y,m,0).getDate();
+  for(let d=1;d<=lastDay;d++){
+    const opt = document.createElement("option"); opt.value=d; opt.textContent=`${d}日`; daySelect.appendChild(opt);
   }
+  daySelect.value = current.getDate();
+}
+yearSelect.addEventListener("change",populateDays);
+monthSelect.addEventListener("change",populateDays);
+populateDays();
 
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheetName = `${year}年${month}月入力`;
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet) throw new Error("指定した月のシートが存在しません");
+let barChartInstance = null;
+let pieChartInstance = null;
 
-    // B列：名前（8:1017）
-    const names = sheet.getRange("B8:B1017").getValues().flat();
-    const rowIndex = names.findIndex(n => n === name);
-    if (rowIndex === -1) throw new Error("名前が見つかりません");
+document.getElementById("search-button").addEventListener("click", async ()=>{
+  const name = document.getElementById("name-input").value.trim();
+  const year = yearSelect.value;
+  const month = monthSelect.value;
+  const day = daySelect.value;
+  const status = document.getElementById("status-message");
+  const results = document.getElementById("results");
 
-    const lastCol = sheet.getLastColumn();
+  if(!name){ status.textContent="名前を入力してねっ"; results.style.display="none"; return; }
 
-    // 1行目:日付、2行目:開始時刻
-    const headerDates = sheet.getRange(1,3,1,lastCol-2).getValues()[0];
-    const startTimes = sheet.getRange(2,3,1,lastCol-2).getValues()[0];
+  status.textContent="ロード、チュ…♡"; results.style.display="none";
 
-    // 8:1017行 スコア
-    const scoresData = sheet.getRange(8,3,1010,lastCol-2).getValues();
+  try{
+    const res = await fetch(`${API_URL}?name=${encodeURIComponent(name)}&year=${year}&month=${month}&date=${year}/${month}/${day}`);
+    const data = await res.json();
+    if(data.error){ status.textContent=data.error; return; }
 
-    // 1024:1032 着順
-    const rankRows = sheet.getRange(1024,3,9,lastCol-2).getValues();
+    status.textContent=""; results.style.display="block";
 
-    // 対象日付列を抽出
-    const targetCols = [];
-    headerDates.forEach((d,colIdx)=>{
-      if(!d) return;
-      const dStr = Utilities.formatDate(new Date(d), Session.getScriptTimeZone(), "yyyy/MM/dd");
-      if(dStr === dateStr) targetCols.push(colIdx);
-    });
-    if(targetCols.length===0) throw new Error("その日のゲームは存在しません");
+    // 集計期間と人数
+    document.getElementById("period").textContent=`日付: ${data.date}`;
+    document.getElementById("visitor-count").textContent=`集計人数: ${data.ランキング ? Object.keys(data.ランキング).length : "不明"} 人`;
+    document.getElementById("member-info").textContent=`No. ?   ${data.name}`;
 
-    // 名前1人分のゲームデータ
-    const games = targetCols.map(c=>{
-      const score = scoresData[rowIndex][c];
-      const time = startTimes[c] ? Utilities.formatDate(new Date(startTimes[c]), Session.getScriptTimeZone(), "HH:mm:ss") : "";
-      return {time, score};
-    });
+    // ランキング
+    createTable("ranking-table",[
+      ["半荘数","総スコア","最高スコア","平均スコア","平均着順"],
+      [
+        data.ランキング.半荘数ランキング,
+        data.ランキング.総スコアランキング,
+        data.ランキング.最高スコアランキング,
+        data.ランキング.平均スコアランキング,
+        data.ランキング.平均着順ランキング
+      ]
+    ],5);
 
     // 日別成績
-    const halfCount = games.length;
-    const totalScore = games.reduce((a,b)=>a+b.score,0);
-    const highestScore = Math.max(...games.map(g=>g.score));
-    const avgScore = totalScore / halfCount;
+    createTable("score-summary-table",[
+      ["半荘数","総スコア","最高スコア","平均スコア","平均着順"],
+      [
+        `${data.日別成績.半荘数}半荘`,
+        `${data.日別成績.総スコア}pt`,
+        `${data.日別成績.最高スコア}pt`,
+        `${data.日別成績.平均スコア.toFixed(3)}pt`,
+        data.日別成績.平均着順 ? data.日別成績.平均着順.toFixed(3)+"位" : "なし"
+      ]
+    ],5);
 
-    // 平均着順
-    const personRanks = [];
-    targetCols.forEach(c=>{
-      for(let r=0;r<rankRows.length;r+=2){
-        const rank = rankRows[r][c];
-        const rankName = rankRows[r+1][c];
-        if(rankName===name && typeof rank==="number") personRanks.push(rank);
-      }
+    // スコアデータ
+    const scoreRows = [["時刻","スコア"]];
+    data.スコアデータ.forEach(g=>{
+      scoreRows.push([g.time, g.score]);
     });
-    const avgRank = personRanks.length>0 ? personRanks.reduce((a,b)=>a+b,0)/personRanks.length : null;
+    createTable("scoredata-table",scoreRows,2);
 
-    // 全員分ランキング
-    const allStats = names.map((n,idx)=>{
-      const personScores = targetCols.map(c=>scoresData[idx][c]||0);
-      const half = personScores.filter(s=>s!==0).length;
-      const total = personScores.reduce((a,b)=>a+b,0);
-      const high = Math.max(...personScores);
-      const avg = half>0 ? total/half : 0;
+    // 棒グラフ
+    const scoresForChart = data.スコアデータ.map(g=>g.score);
+    createBarChart(scoresForChart);
 
-      const ranks = targetCols.map(c=>{
-        for(let r=0;r<rankRows.length;r+=2){
-          if(rankRows[r+1][c]===n) return rankRows[r][c];
-        }
-        return null;
-      }).filter(x=>x!==null);
-      const avgR = ranks.length>0? ranks.reduce((a,b)=>a+b,0)/ranks.length : null;
-      return {name:n, half, total, high, avg, avgRank: avgR};
-    });
+    // 円グラフ
+    createPieChart(data.rankPieData);
 
-    function calcRank(statArr,key){
-      const sorted = [...statArr].sort((a,b)=>b[key]-a[key]);
-      const rankMap={};
-      sorted.forEach((p,i)=>rankMap[p.name]=i+1);
-      return rankMap[name] || null;
-    }
-
-    const rankings = {
-      半荘数ランキング: calcRank(allStats,"half"),
-      総スコアランキング: calcRank(allStats,"total"),
-      最高スコアランキング: calcRank(allStats,"high"),
-      平均スコアランキング: calcRank(allStats,"avg"),
-      平均着順ランキング: calcRank(allStats,"avgRank")
-    };
-
-    // 円グラフ用着順
-    const rankCounts = {"1着率":0,"1.5着率":0,"2着率":0,"2.5着率":0,"3着率":0,"3.5着率":0,"4着率":0};
-    personRanks.forEach(r=>{
-      if(r===1) rankCounts["1着率"]+=1;
-      else if(r===1.5) rankCounts["1.5着率"]+=1;
-      else if(r===2) rankCounts["2着率"]+=1;
-      else if(r===2.5) rankCounts["2.5着率"]+=1;
-      else if(r===3) rankCounts["3着率"]+=1;
-      else if(r===3.5) rankCounts["3.5着率"]+=1;
-      else if(r===4) rankCounts["4着率"]+=1;
-    });
-    const totalRanks = personRanks.length || 1;
-    for(const k in rankCounts) rankCounts[k] /= totalRanks;
-
-    const result = {
-      year, month, date: dateStr, name,
-      日別成績:{
-        半荘数: halfCount,
-        総スコア: totalScore,
-        最高スコア: highestScore,
-        平均スコア: parseFloat(avgScore.toFixed(3)),
-        平均着順: avgRank ? parseFloat(avgRank.toFixed(3)) : null
-      },
-      ランキング: rankings,
-      スコアデータ: games,
-      rankPieData: rankCounts
-    };
-
-    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-
-  } catch(err){
-    return ContentService.createTextOutput(JSON.stringify({error:err.message})).setMimeType(ContentService.MimeType.JSON);
+  }catch(e){
+    status.textContent=`エラー: ${e.message}`;
   }
+});
+
+function createTable(id,rows,cols){
+  const table = document.getElementById(id);
+  table.innerHTML="";
+  table.style.gridTemplateColumns=`repeat(${cols},18vw)`;
+  rows.forEach((row,rowIndex)=>{
+    row.forEach(cell=>{
+      const div=document.createElement("div");
+      div.textContent = cell;
+      div.className = rowIndex===0 ? "header" : "data";
+      if(!cell||cell.toString().trim()==="") div.classList.add("empty-cell");
+      table.appendChild(div);
+    });
+  });
+}
+
+function createBarChart(scores){
+  const ctx = document.getElementById("bar-chart").getContext("2d");
+  if(barChartInstance) barChartInstance.destroy();
+  barChartInstance = new Chart(ctx,{
+    type:"bar",
+    data:{labels:scores.map((_,i)=>i+1), datasets:[{label:"スコア", data:scores, backgroundColor:"rgba(186,140,255,0.7)"}]},
+    options:{responsive:true, maintainAspectRatio:true}
+  });
+}
+
+function createPieChart(data){
+  const ctx = document.getElementById("pie-chart").getContext("2d");
+  if(pieChartInstance) pieChartInstance.destroy();
+  pieChartInstance = new Chart(ctx,{
+    type:"pie",
+    data:{
+      labels:["1着率","1.5着率","2着率","2.5着率","3着率","3.5着率","4着率"],
+      datasets:[{data:Object.values(data), backgroundColor:["#FF6384","#FF9F40","#FFCD56","#4BC0C0","#36A2EB","#9966FF","#C9CBCF"]}]
+    },
+    options:{responsive:true, maintainAspectRatio:true}
+  });
 }
