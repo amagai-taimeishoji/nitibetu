@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>麻雀日別成績</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>麻雀 日別成績</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="search-area">
@@ -12,32 +12,33 @@
       <select id="year-select"></select>
       <select id="month-select"></select>
       <select id="day-select"></select>
-      <input type="text" id="name-input" placeholder="名前を入力してねっ" />
+      <input id="name-input" type="text" placeholder="名前を入力してねっ" />
       <button id="search-button">検索</button>
     </div>
     <p id="status-message"></p>
   </div>
 
-  <div id="results" style="display:none;">
-    <div id="period-visitor">
+  <main id="results" style="display:none;">
+    <header id="info">
       <div id="period"></div>
       <div id="visitor-count"></div>
-    </div>
-    <div id="member-info"></div>
+      <div id="member-info"></div>
+    </header>
 
-    <div class="box15"><h3>日別ランキング</h3></div>
+    <div class="box stripe"><h3>［日別ランキング］</h3></div>
     <div id="ranking-table" class="table"></div>
 
-    <div class="box16"><h3>日別成績</h3></div>
-    <div id="scoredata-table" class="table"></div>
+    <div class="box stripe"><h3>［日別成績］</h3></div>
+    <div id="score-summary" class="table"></div>
 
-    <div class="box17"><h3>スコアデータ</h3></div>
-    <div id="tenhan-table" class="table"></div>
-    <canvas id="bar-chart"></canvas>
+    <div class="box stripe"><h3>［スコアデータ（左→右・時刻順）］</h3></div>
+    <div id="score-list" class="table"></div>
+    <canvas id="bar-chart" height="160"></canvas>
 
-    <div class="box18"><h3>着順割合（円グラフ）</h3></div>
-    <canvas id="pie-chart"></canvas>
-  </div>
+    <div class="box stripe"><h3>［着順割合］</h3></div>
+    <div id="rank-count-table" class="table"></div>
+    <canvas id="pie-chart" height="160"></canvas>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
