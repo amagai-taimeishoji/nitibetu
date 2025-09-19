@@ -1,5 +1,5 @@
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxiHm0Lxe_I9BP6mChGckRii1eMrW3aPUGUqN-Cxv8YNJCCrgBBiiu5EimNsCKrl5dq/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzJfZCLvxaihsbE-j0EG_CxGvCzALpep51NAd20qN12kHf2jGCcDfEBANC-l_TUtssz/exec";
 
 // 初期UI要素
 const yearSelect = document.getElementById("year-select");
@@ -172,5 +172,6 @@ function createPieChart(pieData) {
     options: { responsive:true, maintainAspectRatio:false }
   });
 }
+
 
 
