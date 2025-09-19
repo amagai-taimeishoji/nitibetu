@@ -1,64 +1,25 @@
 body {
   font-family: 'Noto Sans JP', sans-serif;
-  margin:0 auto;
-  padding:0;
-  background-color:#fff;
-  text-align:center;
-  max-width:100%;
+  margin: 0; padding: 0;
+  background-color: #fff;
+  text-align: center;
 }
+#search-area { padding: 10px; }
+#search-inputs { display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:wrap; }
+#name-input { padding:8px; font-size:1rem; min-width:200px; border-radius:6px; border:1px solid #ccc; }
+#search-button { padding:8px 12px; border-radius:8px; background:linear-gradient(45deg,#4caf50,#81c784); color:#fff; border:none; cursor:pointer; }
+#status-message { color:red; font-size:1.1rem; margin-top:8px; }
 
-h3 {
-  font-size:4vw;
-  font-weight:bold;
-  line-height:1.2;
-  color:#333;
+.box { margin:10px auto; width:82vw; max-width:900px; padding:8px; display:flex; justify-content:center; align-items:center; }
+.stripe { background: repeating-linear-gradient(-45deg, #f0f8ff, #f0f8ff 3px, #e9f4ff 3px, #e9f4ff 7px); }
+
+.table { display:grid; gap:6px; justify-content:center; margin:8px auto; max-width:900px; }
+.table div { padding:6px; border-radius:6px; background:#f7f7f7; }
+.table .header { font-weight:bold; background:#e0e0e0; }
+.table .empty-cell { display:none; }
+
+/* responsive */
+@media (max-width:600px) {
+  .box { width:92vw; }
+  #name-input { min-width:120px; font-size:0.9rem; }
 }
-
-.box {
-  padding:0.5em 1em;
-  max-width:82vw;
-  width:82vw;
-  height:3vh;
-  margin:10px auto 15px auto;
-  background: repeating-linear-gradient(-45deg, #f0f8ff, #f0f8ff 3px, #e9f4ff 3px, #e9f4ff 7px);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-#search-area { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; }
-
-#search-inputs {
-  display:flex; flex-direction:row; justify-content:center; align-items:center; gap:5px; margin-bottom:5px;
-}
-
-#status-message {
-  margin-top:5px; font-size:3.5vw; color:red; text-align:center;
-}
-
-#year-select, #month-select, #day-select {
-  padding:5px 12px; font-size:0.9rem; border:1px solid #ccc; border-radius:4px;
-}
-
-#name-input {
-  flex:1; min-width:30%; max-width:35%; padding:8px; font-size:3.5vw; border:1px solid #ccc; border-radius:6px;
-}
-
-#search-button {
-  background: linear-gradient(45deg,#4caf50,#81c784); color:white; border:none; border-radius:8px;
-  padding:8px 16px; font-size:3.5vw; cursor:pointer;
-}
-#search-button:hover {
-  transform:scale(1.05);
-  background: linear-gradient(45deg,#45a049,#66bb6a);
-}
-
-.table {
-  display:grid;
-  gap:2px;
-  margin:5px auto 15px auto;
-}
-
-.table div.header { font-weight:bold; background:#d0d0d0; }
-.table div.data { background:#f7f7f7; }
-.table div.empty-cell { display:none; }
