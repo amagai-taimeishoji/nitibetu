@@ -1,32 +1,30 @@
-// ========== 設定 (ここを実際のGAS公開URLに置き換えてください) ==========
-const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; // ← ここを変更
+// ---------------- Config (ここを編集) ----------------
+const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; // ← 必ず差し替えて
 const YEAR = 2025;
-const MONTH = 10; // 10月（固定）
+const MONTH = 10;
 const DAY_MIN = 1;
 const DAY_MAX = 30;
-const LOADING_DURATION_MS = 15000; // 15秒でMAX（アニメーション）
-// =======================================================================
+const LOADING_DURATION_MS = 15000; // 15秒でMAX
+// ----------------------------------------------------
 
-let barChart = null;
-let pieChart = null;
+let barChartInstance = null;
+let pieChartInstance = null;
 let loadingStart = null;
-let loadingRafId = null;
+let loadingRaf = null;
 
-// ---- DOM ----
+// DOM
+const updateStatusEl = document.getElementById("update-status");
+const visitorCountEl = document.getElementById("visitor-count");
+const memberInfoEl = document.getElementById("member-info");
 const nameInput = document.getElementById("name-input");
 const dateSelect = document.getElementById("date-select");
 const prevBtn = document.getElementById("prev-day");
 const nextBtn = document.getElementById("next-day");
 const searchBtn = document.getElementById("search-button");
-const statusMsg = document.getElementById("status-message");
-const loadingContainer = document.getElementById("loading-container");
+const loadingArea = document.getElementById("loading-area");
 const loadingFill = document.getElementById("loading-fill");
 const loadingText = document.getElementById("loading-text");
-
-const resultsDiv = document.getElementById("results");
-const updateStatusDiv = document.getElementById("update-status");
-const visitorCountDiv = document.getElementById("visitor-count");
-const memberInfoDiv = document.getElementById("member-info");
+const resultsSection = document.getElementById("results");
 
 const rankingTable = document.getElementById("ranking-table");
 const scoredataTable = document.getElementById("scoredata-table");
@@ -35,75 +33,63 @@ const barCanvas = document.getElementById("bar-chart");
 const rankCountTable = document.getElementById("rank-count-table");
 const pieCanvas = document.getElementById("pie-chart");
 
-// ---- 初期化 ----
-initDateSelect();
+// init
+populateDateDropdown(YEAR, MONTH);
 setInitialDate();
 attachEvents();
 
-// ----------------- functions -----------------
+// ---------- functions ----------
 
-function initDateSelect(){
+function populateDateDropdown(year, month) {
   dateSelect.innerHTML = "";
-  for(let d=DAY_MIN; d<=DAY_MAX; d++){
-    const opt = document.createElement("option");
-    const dt = new Date(YEAR, MONTH-1, d);
-    const weekday = dt.toLocaleDateString("ja-JP", { weekday: "short", timeZone: "Asia/Tokyo" });
-    opt.value = formatDateSlash(dt); // yyyy/MM/dd
-    opt.textContent = `${MONTH}月${d}日 (${weekday})`;
-    dateSelect.appendChild(opt);
+  const weekdays = ["日","月","火","水","木","金","土"];
+  const lastDay = new Date(year, month, 0).getDate();
+  for (let d = DAY_MIN; d <= lastDay && d <= DAY_MAX; d++) {
+    const option = document.createElement("option");
+    const dt = new Date(year, month - 1, d);
+    option.value = `${year}/${String(month).padStart(2,"0")}/${String(d).padStart(2,"0")}`;
+    option.textContent = `${month}/${d} (${weekdays[dt.getDay()]})`;
+    dateSelect.appendChild(option);
   }
 }
 
 function setInitialDate(){
-  // JST 現在時刻を取得
+  // JST now
   const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
   const nowJst = new Date(nowStr);
-  let baseDate = new Date(nowJst);
+  let base = new Date(nowJst);
   if (nowJst.getHours() < 20) {
-    // 前日
-    baseDate.setDate(nowJst.getDate() - 1);
+    base.setDate(nowJst.getDate() - 1);
   }
-  // clamp into month range
-  if (baseDate.getFullYear() !== YEAR || (baseDate.getMonth()+1) !== MONTH) {
-    // out of target month -> default to first available (DAY_MIN)
-    baseDate = new Date(YEAR, MONTH-1, DAY_MIN);
+  // if not in our month range, default to DAY_MIN
+  if (base.getFullYear() !== YEAR || base.getMonth() + 1 !== MONTH) {
+    base = new Date(YEAR, MONTH - 1, DAY_MIN);
   }
-  const val = formatDateSlash(baseDate);
+  const val = `${YEAR}/${String(MONTH).padStart(2,"0")}/${String(base.getDate()).padStart(2,"0")}`;
   dateSelect.value = val;
   updateNavButtons();
 }
 
 function attachEvents(){
-  prevBtn.addEventListener("click", ()=>{
-    changeSelectedDay(-1);
-    fetchAndRender(); // prev arrow triggers fetch
-  });
-  nextBtn.addEventListener("click", ()=>{
-    changeSelectedDay(1);
-    fetchAndRender(); // next arrow triggers fetch
-  });
-  dateSelect.addEventListener("change", ()=>{
-    updateNavButtons();
-    // spec: プルダウン変更時は fetch & 描画
-    fetchAndRender();
-  });
-  searchBtn.addEventListener("click", ()=>{
-    fetchAndRender();
-  });
+  searchBtn.addEventListener("click", ()=> fetchAndRender({ triggeredBy: "search" }));
+  dateSelect.addEventListener("change", ()=> fetchAndRender({ triggeredBy: "select" }));
+  prevBtn.addEventListener("click", ()=> { changeSelectedDay(-1); fetchAndRender({ triggeredBy: "nav" }); });
+  nextBtn.addEventListener("click", ()=> { changeSelectedDay(1); fetchAndRender({ triggeredBy: "nav" }); });
+  nameInput.addEventListener("keydown", (e)=> { if (e.key === "Enter") fetchAndRender({ triggeredBy: "search" }); });
 }
 
 function changeSelectedDay(delta){
   const current = parseSelectedDay();
-  let newDay = current + delta;
-  if (newDay < DAY_MIN) newDay = DAY_MIN;
-  if (newDay > DAY_MAX) newDay = DAY_MAX;
-  const newDate = new Date(YEAR, MONTH-1, newDay);
-  dateSelect.value = formatDateSlash(newDate);
+  let next = current + delta;
+  const last = Math.min(new Date(YEAR, MONTH, 0).getDate(), DAY_MAX);
+  if (next < DAY_MIN) next = DAY_MIN;
+  if (next > last) next = last;
+  const newVal = `${YEAR}/${String(MONTH).padStart(2,"0")}/${String(next).padStart(2,"0")}`;
+  dateSelect.value = newVal;
   updateNavButtons();
 }
 
 function parseSelectedDay(){
-  // dateSelect.value is yyyy/MM/dd
   const parts = dateSelect.value.split("/");
   return parseInt(parts[2], 10);
 }
@@ -111,51 +97,51 @@ function parseSelectedDay(){
 function updateNavButtons(){
   const day = parseSelectedDay();
   prevBtn.hidden = (day <= DAY_MIN);
-  nextBtn.hidden = (day >= DAY_MAX);
+  const last = Math.min(new Date(YEAR, MONTH, 0).getDate(), DAY_MAX);
+  nextBtn.hidden = (day >= last);
 }
 
-// ---------- Loading animation (non-looping, 15s to MAX) ----------
+// ---------- Loading animation ----------
 function startLoading(){
-  loadingContainer.style.display = "flex";
+  loadingArea.style.display = "flex";
   loadingFill.style.width = "0%";
   loadingText.style.display = "block";
-  statusMsg.textContent = "ロード、チュ…♡";
   loadingStart = performance.now();
-  cancelAnimationFrame(loadingRafId);
-  loadingRafId = requestAnimationFrame(loadingTick);
+  cancelAnimationFrame(loadingRaf);
+  loadingRaf = requestAnimationFrame(loadingTick);
 }
 function loadingTick(now){
   const elapsed = now - loadingStart;
   const pct = Math.min(100, (elapsed / LOADING_DURATION_MS) * 100);
   loadingFill.style.width = pct + "%";
   if (pct < 100) {
-    loadingRafId = requestAnimationFrame(loadingTick);
+    loadingRaf = requestAnimationFrame(loadingTick);
   } else {
-    cancelAnimationFrame(loadingRafId);
+    cancelAnimationFrame(loadingRaf);
   }
 }
 function stopLoading(){
-  cancelAnimationFrame(loadingRafId);
+  cancelAnimationFrame(loadingRaf);
   loadingFill.style.width = "100%";
   setTimeout(()=>{
-    loadingContainer.style.display = "none";
-    statusMsg.textContent = "";
-  }, 250);
+    loadingArea.style.display = "none";
+    loadingFill.style.width = "0%";
+    loadingText.style.display = "none";
+  }, 220);
 }
 
-// ---------- Fetch & render ----------
-async function fetchAndRender(){
+// ---------- Fetch & Render ----------
+async function fetchAndRender({ triggeredBy="search" } = {}){
   const name = nameInput.value.trim();
   if (!name) {
-    statusMsg.textContent = "名前を入力してねっ";
+    alert("名前を入力してねっ");
     return;
   }
-  const dateParam = dateSelect.value; // yyyy/MM/dd per spec
-  // start loading
+  const dateParam = dateSelect.value; // yyyy/MM/dd
+  // show loading & set update text
   startLoading();
-  resultsDiv.style.display = "none";
-  updateStatusDiv.textContent = "";
-  visitorCountDiv.textContent = "";
+  updateStatusEl.textContent = "読み込みチュ…♡";
+  resultsSection.style.display = "none";
 
   try {
     const url = `${API_URL}?name=${encodeURIComponent(name)}&date=${encodeURIComponent(dateParam)}`;
@@ -164,26 +150,24 @@ async function fetchAndRender(){
 
     if (data.error) {
       stopLoading();
-      statusMsg.textContent = data.error;
+      updateStatusEl.textContent = data.error;
       return;
     }
 
-    // updateStatus
-    updateStatusDiv.textContent = data.updateStatus || "";
+    // update status from server (if present)
+    updateStatusEl.textContent = data.updateStatus || "ー";
 
-    // 集計人数 (サーバは allStats を返す)
-    const all = data.all || [];
-    const uniqueCount = data.集計人数 || all.filter(p => p.half>0).length;
-    visitorCountDiv.textContent = `集計人数: ${uniqueCount} 人`;
+    // visitor / member info
+    const all = data.all || data.allStats || [];
+    const uniqueCount = (data.集計人数 != null) ? data.集計人数 : all.filter(p => p.half>0).length;
+    visitorCountEl.textContent = `集計人数: ${uniqueCount} 人`;
+    memberInfoEl.textContent = `No. ${data.no || "不明"}   ${data.name || ""}`;
 
-    // member info
-    memberInfoDiv.textContent = `No. ${data.no || "不明"}   ${data.name}`;
-
-    // 全員ランキング計算 (フロント)
+    // prepare all ranking maps
     const rankMaps = buildAllRankMaps(all);
 
-    // 日別ランキング表（1行:項目, 2行:順位(位)）
-    const rankingRow = [
+    // ranking table (only user's rank shown)
+    const rankRow = [
       formatRankValue(rankMaps.half[data.name]),
       formatRankValue(rankMaps.total[data.name]),
       formatRankValue(rankMaps.high[data.name]),
@@ -192,80 +176,63 @@ async function fetchAndRender(){
     ];
     createTable("ranking-table", [
       ["累計半荘数\nランキング","総スコア\nランキング","最高スコア\nランキング","平均スコア\nランキング","平均着順\nランキング"],
-      rankingRow
+      rankRow
     ], 5);
 
-    // 日別成績（数値表）
-    const userSummary = data.summary || {};
+    // score data summary table
+    const s = data.summary || {};
     createTable("scoredata-table", [
       ["累計半荘数","総スコア","最高スコア","平均スコア","平均着順"],
       [
-        userSummary.半荘数 != null ? `${userSummary.半荘数}半荘` : "データなし",
-        userSummary.総スコア != null ? `${Number(userSummary.総スコア).toFixed(1)}pt` : "データなし",
-        userSummary.最高スコア != null ? `${Number(userSummary.最高スコア).toFixed(1)}pt` : "データなし",
-        userSummary.平均スコア != null ? `${Number(userSummary.平均スコア).toFixed(3)}pt` : "データなし",
-        userSummary.平均着順 != null ? `${Number(userSummary.平均着順).toFixed(3)}位` : "データなし"
+        (s.半荘数!=null) ? `${s.半荘数}半荘` : "データなし",
+        (s.総スコア!=null) ? `${Number(s.総スコア).toFixed(1)}pt` : "データなし",
+        (s.最高スコア!=null) ? `${Number(s.最高スコア).toFixed(1)}pt` : "データなし",
+        (s.平均スコア!=null) ? `${Number(s.平均スコア).toFixed(3)}pt` : "データなし",
+        (s.平均着順!=null) ? `${Number(s.平均着順).toFixed(3)}位` : "データなし"
       ]
     ], 5);
 
-    // ゲームリスト（時刻順）
+    // game list (time-ordered ascending)
     const games = (data.games || []).slice();
-    const sortedGames = games.slice().sort((a,b)=>{
-      // a.time like "16:40:00" or "" -> create Date
-      const ta = parseTimeForSort(data.date, a.time);
-      const tb = parseTimeForSort(data.date, b.time);
-      return ta - tb;
-    });
-    renderGameList(sortedGames);
+    games.sort((a,b) => parseTimeForSort(data.date,a.time) - parseTimeForSort(data.date,b.time));
+    renderGameList(games);
 
-    // 棒グラフ
-    createBarChart(sortedGames);
+    // bar chart
+    createBarChart(games);
 
-    // 着順カウント表と円グラフ
-    const rankCounts = countRanks(sortedGames);
+    // rank counts and pie
+    const rankCounts = countRanks(games);
     createRankCountTable(rankCounts);
     createPieChart(rankCounts);
 
-    // show results
-    resultsDiv.style.display = "block";
+    // show section
+    resultsSection.style.display = "block";
     stopLoading();
 
   } catch (err) {
     stopLoading();
+    updateStatusEl.textContent = `成績更新チュ♡今は見れません (${err.message})`;
     console.error(err);
-    statusMsg.textContent = `成績更新チュ♡今は見れません (${err.message})`;
   }
 }
 
-// ---------- Utilities ----------
-
-function formatDateSlash(d){
-  const y = d.getFullYear();
-  const m = ('0'+(d.getMonth()+1)).slice(-2);
-  const day = ('0'+d.getDate()).slice(-2);
-  return `${y}/${m}/${day}`;
-}
+// ---------- helpers ----------
 
 function parseTimeForSort(dateStr, timeStr){
-  // dateStr "yyyy/MM/dd", timeStr "HH:mm:ss"
-  if (!timeStr) return new Date(dateStr + "T00:00:00+09:00").getTime();
-  const iso = dateStr.replace(/\//g,'-') + 'T' + timeStr + '+09:00';
-  return new Date(iso).getTime();
+  if (!timeStr) return new Date(dateStr.replace(/\//g,'-') + 'T00:00:00+09:00').getTime();
+  return new Date(dateStr.replace(/\//g,'-') + 'T' + timeStr + '+09:00').getTime();
 }
 
-// build rank maps (standard competition ranking; same value -> same rank; next rank = index+1)
+// Build ranking maps from all array
 function buildAllRankMaps(all){
-  // all: array of {name, half, total, high, avg, avgRank}
-  const copy = all.slice();
-
+  const arr = all.slice();
   function calc(key, asc=false){
-    const arr = copy.map(a=>({name:a.name, val: a[key]==null ? (asc? Infinity : -Infinity) : a[key]}));
-    arr.sort((x,y)=> asc ? x.val - y.val : y.val - x.val);
+    const tmp = arr.map(a=>({name:a.name, val:(a[key]==null ? (asc? Infinity : -Infinity) : a[key])}));
+    tmp.sort((x,y)=> asc ? x.val - y.val : y.val - x.val);
     const map = {};
-    let prev = null;
-    let lastRank = 0;
-    for (let i=0;i<arr.length;i++){
-      const it = arr[i];
+    let prev = null, lastRank=0;
+    for (let i=0;i<tmp.length;i++){
+      const it = tmp[i];
       if (prev === it.val) {
         map[it.name] = lastRank;
       } else {
@@ -276,26 +243,22 @@ function buildAllRankMaps(all){
     }
     return map;
   }
-
   return {
     half: calc("half", false),
     total: calc("total", false),
     high: calc("high", false),
     avg: calc("avg", false),
-    avgRank: calc("avgRank", true) // 小さい方が上位
+    avgRank: calc("avgRank", true)
   };
 }
 
-function formatRankValue(v){
-  return v == null ? "データなし" : `${v}位`;
-}
+function formatRankValue(v){ return v == null ? "データなし" : `${v}位`; }
 
-// createTable: id, rows(array-of-arrays), cols
 function createTable(id, rows, cols){
   const table = document.getElementById(id);
   table.innerHTML = "";
   table.style.gridTemplateColumns = `repeat(${cols}, 18vw)`;
-  rows.forEach((row, rowIndex)=>{
+  rows.forEach((row,rowIndex)=>{
     row.forEach(cell=>{
       const div = document.createElement("div");
       div.textContent = cell;
@@ -306,88 +269,70 @@ function createTable(id, rows, cols){
   });
 }
 
+// render game list
 function renderGameList(games){
   tenhanList.innerHTML = "";
   if (!games || games.length === 0) {
-    const div = document.createElement("div");
-    div.className = "score-card";
-    div.textContent = "スコアなし";
-    tenhanList.appendChild(div);
+    const d = document.createElement("div");
+    d.className = "score-card";
+    d.textContent = "スコアなし";
+    tenhanList.appendChild(d);
     return;
   }
-  games.forEach((g, idx)=>{
+  games.forEach((g,i)=>{
     const card = document.createElement("div");
     card.className = "score-card";
     const left = document.createElement("div");
     left.className = "card-left";
-    left.innerHTML = `<strong>${idx+1}.</strong> <span>${g.time || "-"}</span>`;
+    left.innerHTML = `<strong>${i+1}.</strong> <span style="min-width:60px;display:inline-block">${g.time || "-"}</span>`;
     const right = document.createElement("div");
-    right.innerHTML = `<span>${formatScoreForDisplay(g.score)}</span>　<span>${g.rank!=null? g.rank + "着":"着順なし"}</span>`;
+    const scoreStr = (g.score==null || isNaN(g.score)) ? "データ不足" : `${Number(g.score).toFixed(Math.abs(g.score - Math.round(g.score))<1e-6 ? 0 : 1)}pt`;
+    right.innerHTML = `<span>${scoreStr}</span>&nbsp;&nbsp;<span>${g.rank!=null ? g.rank + "着":"着順なし"}</span>`;
     card.appendChild(left);
     card.appendChild(right);
     tenhanList.appendChild(card);
   });
 }
 
-function formatScoreForDisplay(s){
-  if (s == null || isNaN(s)) return "データ不足";
-  if (Math.abs(s - Math.round(s)) < 1e-6) return `${s}pt`;
-  return `${Number(s).toFixed(1)}pt`;
-}
-
-// ---- Bar chart (center 0) ----
+// bar chart (center 0), no animation, fixed size via CSS
 function createBarChart(games){
-  if (barChart) barChart.destroy();
+  if (barChartInstance) barChartInstance.destroy();
   const ctx = barCanvas.getContext("2d");
-  const labels = games.map(g => g.time || "");
-  const dataVals = games.map(g => Number(g.score || 0));
-  if (dataVals.length === 0) {
-    // clear canvas
-    ctx.clearRect(0, 0, barCanvas.width, barCanvas.height);
+  const labels = games.map(g=>g.time || "");
+  const values = games.map(g=>Number(g.score || 0));
+  if (values.length === 0) {
+    ctx.clearRect(0,0,barCanvas.width,barCanvas.height);
     return;
   }
-  const maxVal = Math.max(...dataVals);
-  const minVal = Math.min(...dataVals);
-  const maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal)) * 1.1 || 10;
+  const maxAbs = Math.max(10, Math.max(...values.map(v=>Math.abs(v)))) * 1.2;
 
-  const bg = dataVals.map(v => v >= 0 ? "rgba(76,175,80,0.9)" : "rgba(244,67,54,0.9)");
+  const bg = values.map(v => v >= 0 ? "rgba(76,175,80,0.9)" : "rgba(244,67,54,0.9)");
 
-  barChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "スコア",
-        data: dataVals,
-        backgroundColor: bg
-      }]
-    },
+  barChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: false,
       plugins: { legend: { display: false } },
       scales: {
-        y: {
-          min: -maxAbs,
-          max: maxAbs,
-          ticks: { stepSize: Math.ceil(maxAbs/5) }
-        }
+        y: { min: -maxAbs, max: maxAbs, ticks: { stepSize: Math.ceil(maxAbs/5) } }
       }
     }
   });
 }
 
-// ---- Rank counts (1,1.5,2,2.5,3,3.5,4) ----
+// rank counts 7 categories
 function countRanks(games){
   const keys = ["1","1.5","2","2.5","3","3.5","4"];
-  const counts = {};
-  keys.forEach(k => counts[k]=0);
+  const cnt = {}; keys.forEach(k=>cnt[k]=0);
   games.forEach(g=>{
     if (g.rank==null) return;
-    const r = String(g.rank);
-    if (counts[r]!==undefined) counts[r] += 1;
+    const key = String(g.rank);
+    if (cnt[key]!==undefined) cnt[key] += 1;
   });
-  return counts;
+  return cnt;
 }
 
 function createRankCountTable(counts){
@@ -396,17 +341,15 @@ function createRankCountTable(counts){
   table.innerHTML = "";
   const cols = 4;
   table.style.gridTemplateColumns = `repeat(${cols}, 18vw)`;
-
   const row1 = ["1着の回数","2着の回数","3着の回数","4着の回数"];
-  const row2 = [`${counts["1"]||0}回`, `${counts["2"]||0}回`, `${counts["3"]||0}回`, `${counts["4"]||0}回`];
+  const row2 = [`${counts["1"]||0}回`,`${counts["2"]||0}回`,`${counts["3"]||0}回`,`${counts["4"]||0}回`];
   const row3 = ["1.5着の回数","2.5着の回数","3.5着の回数",""];
-  const row4 = [`${counts["1.5"]||0}回`, `${counts["2.5"]||0}回`, `${counts["3.5"]||0}回`, ""];
-
+  const row4 = [`${counts["1.5"]||0}回`,`${counts["2.5"]||0}回`,`${counts["3.5"]||0}回`,`""`];
   [row1,row2,row3,row4].forEach((r,ri)=>{
     r.forEach(cell=>{
       const d = document.createElement("div");
       d.textContent = cell;
-      d.className = ri%2===0 ? "header" : "data";
+      d.className = ri%2===0 ? "header":"data";
       if (!cell || cell.toString().trim()==="") d.classList.add("empty-cell");
       table.appendChild(d);
     });
@@ -414,7 +357,7 @@ function createRankCountTable(counts){
 }
 
 function createPieChart(counts){
-  if (pieChart) pieChart.destroy();
+  if (pieChartInstance) pieChartInstance.destroy();
   const ctx = pieCanvas.getContext("2d");
   const labels = ["1着","1.5着","2着","2.5着","3着","3.5着","4着"];
   const dataArr = ["1","1.5","2","2.5","3","3.5","4"].map(k=>counts[k]||0);
@@ -424,17 +367,17 @@ function createPieChart(counts){
     return;
   }
   const colors = [
-    "rgba(240,122,122,1)", // 1
-    "rgba(180,180,180,1)", // 1.5 gray
-    "rgba(240,217,109,1)", // 2
-    "rgba(190,190,190,1)", // 2.5
-    "rgba(109,194,122,1)", // 3
-    "rgba(160,160,160,1)", // 3.5
-    "rgba(109,158,217,1)"  // 4
+    "rgba(240,122,122,1)",
+    "rgba(160,160,160,1)",
+    "rgba(240,217,109,1)",
+    "rgba(190,190,190,1)",
+    "rgba(109,194,122,1)",
+    "rgba(140,140,140,1)",
+    "rgba(109,158,217,1)"
   ];
-  pieChart = new Chart(ctx, {
-    type: "pie",
+  pieChartInstance = new Chart(ctx, {
+    type: 'pie',
     data: { labels, datasets:[{ data: dataArr, backgroundColor: colors }] },
-    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'left'}} }
+    options: { responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{position:'left'}} }
   });
 }
