@@ -1,69 +1,90 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>麻雀成績表示</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>麻雀 日別成績表示</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <main class="container">
 
-<!-- 更新状況 -->
-<div class="update-status">
-  更新状況: <span id="updateStatus"></span>
-</div>
+    <!-- 更新状況 -->
+    <section class="section update">
+      <div class="striped-title">更新状況</div>
+      <div id="updateStatus" class="update-text"></div>
+    </section>
 
-<!-- 名前入力＋検索ボタン -->
-<div class="controls">
-  <input type="text" id="nameInput" placeholder="名前を入力">
-  <button id="searchBtn">検索</button>
-</div>
+    <!-- 入力・日付ナビ（⭐部分：常に表示）-->
+    <section class="section controls">
+      <input id="nameInput" type="text" placeholder="名前を入力してねっ" aria-label="名前入力" />
+      <button id="searchBtn" class="btn primary">検索</button>
 
-<!-- 日付選択 -->
-<div class="date-controls">
-  <button id="prevDay">◀️</button>
-  <select id="datePicker"></select>
-  <button id="nextDay">▶️</button>
-</div>
+      <div class="date-nav">
+        <button id="prevDay" class="btn nav">◀️</button>
+        <select id="datePicker" class="date-picker" aria-label="日付選択"></select>
+        <button id="nextDay" class="btn nav">▶️</button>
+      </div>
+    </section>
 
-<!-- ローディング -->
-<div id="loader" class="loader" style="display:none;">
-  <div class="loader-bar"></div>
-  <div class="loader-text">ロード…チュ♡</div>
-</div>
+    <!-- ローディング（検索・日付移動で表示）-->
+    <section id="loader" class="section loading-area hidden" aria-live="polite">
+      <div class="loading-bar-outer">
+        <div id="loadingBar" class="loading-bar-inner"></div>
+      </div>
+      <div class="loading-text">ロード…チュ♡</div>
+    </section>
 
-<!-- 集計人数 / 総ゲーム数 -->
-<div class="summary-info">
-  集計人数: <span id="participantCount"></span>人
-  総ゲーム数: <span id="totalGames"></span>半荘
-</div>
+    <!-- 結果表示領域 -->
+    <section id="results" class="section results hidden">
+      <div class="top-grid">
+        <div class="box">
+          <div class="striped-title">集計情報</div>
+          <div class="info-row"><strong>集計人数</strong> <span id="participantCount">_人</span></div>
+          <div class="info-row"><strong>総ゲーム数</strong> <span id="totalGames">_半荘</span></div>
+        </div>
+        <div class="box">
+          <div class="striped-title">プレイヤー</div>
+          <div class="info-row">No. <span id="playerNo">----</span>　<span id="playerName">---</span></div>
+        </div>
+      </div>
 
-<!-- 個人情報 -->
-<div class="player-info">
-  No. <span id="playerNo"></span> 名前: <span id="playerName"></span>
-</div>
+      <!-- 日別ランキング -->
+      <div class="section-block">
+        <div class="striped-title">日別ランキング</div>
+        <div id="dailyRanking" class="two-row-table"></div>
+      </div>
 
-<!-- 日別ランキング -->
-<div class="section-title">/日別ランキング/</div>
-<table id="dailyRanking" class="ranking-table"></table>
+      <!-- 日別スコアデータ -->
+      <div class="section-block">
+        <div class="striped-title">日別スコアデータ</div>
+        <div id="dailyScores" class="two-row-table"></div>
+      </div>
 
-<!-- 日別スコアデータ -->
-<div class="section-title">/日別スコアデータ/</div>
-<table id="dailyScores" class="ranking-table"></table>
+      <!-- この日のゲーム -->
+      <div class="section-block">
+        <div class="striped-title">この日のゲーム</div>
+        <div class="chart-wrap">
+          <canvas id="scoreBarChart" height="140"></canvas>
+        </div>
+        <div id="gameList" class="games-list"></div>
+      </div>
 
-<!-- ゲームリスト -->
-<div class="section-title">/この日のゲーム/</div>
-<div id="gameList" class="game-list"></div>
+      <!-- 着順データ -->
+      <div class="section-block">
+        <div class="striped-title">着順データ</div>
+        <div id="rankCounts" class="placement-table"></div>
+        <div class="chart-wrap">
+          <canvas id="rankPieChart" height="140"></canvas>
+        </div>
+      </div>
+    </section>
 
-<!-- 棒グラフ -->
-<canvas id="scoreBarChart" height="150"></canvas>
+    <div id="statusMsg" class="status-msg" aria-live="polite"></div>
+  </main>
 
-<!-- 着順データ -->
-<div class="section-title">/着順データ/</div>
-<table id="rankCounts" class="ranking-table"></table>
-<canvas id="rankPieChart" height="150"></canvas>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="script.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
