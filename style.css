@@ -1,109 +1,82 @@
-body {
-  font-family: 'Noto Sans JP', sans-serif;
-  margin: 0 auto;
-  padding: 0;
-  text-align: center;
-  background-color: #fff;
-  max-width: 100%;
+:root{
+  --bg:#ffffff;
+  --muted:#666;
+  --accent:#4caf50;
+  --danger:#f44336;
+  --stripe1: rgba(0,0,0,0.04);
+  --stripe2: rgba(0,0,0,0.02);
 }
 
-.section-title {
-  padding: 0.5em 1em;
-  max-width: 90vw;
-  background: repeating-linear-gradient(-45deg,#f0f8ff,#f0f8ff 3px,#e9f4ff 3px,#e9f4ff 7px);
-  margin: 10px auto;
-  font-weight: bold;
-  text-align: center;
+*{box-sizing:border-box}
+body{font-family:"Noto Sans JP",system-ui,-apple-system,Arial; margin:0; background:var(--bg); color:#222;}
+.wrap{max-width:900px;margin:8px auto;padding:8px}
+
+/* striped titles like reference */
+.striped-title{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:6px;
+  background:repeating-linear-gradient(45deg,var(--stripe1) 0 10px,var(--stripe2) 10px 20px);
+  font-weight:700;
+  margin-bottom:8px;
 }
 
-#search-area {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  margin: 10px 0;
-}
+/* update */
+.update{margin-bottom:10px}
+.update-text{margin-top:6px;color:var(--muted)}
 
-#name-input, #date-input {
-  font-size: 3vw;
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
+/* search */
+.search{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center;margin-bottom:8px}
+#nameInput{padding:8px 12px;border-radius:8px;border:1px solid #ddd;width:48%;min-width:180px;font-size:1rem}
+.date-nav{display:flex;align-items:center;gap:8px}
+.nav{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
+.nav[disabled]{opacity:.4;cursor:default}
+.date-display{min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid #eee;background:#fafafa;font-weight:700}
+.date-picker{padding:8px;border-radius:8px;border:1px solid #ddd}
 
-button {
-  font-size: 3vw;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 6px;
-  background: linear-gradient(45deg,#4caf50,#81c784);
-  color: #fff;
-  cursor: pointer;
-}
+/* loading */
+.loading-area{display:flex;flex-direction:column;align-items:center;gap:6px;margin:10px 0}
+.loading-bar-outer{width:90%;height:10px;background:#eee;border-radius:999px;overflow:hidden}
+.loading-bar-inner{height:100%;width:0;background:linear-gradient(90deg,#ffd1e6,var(--accent));transition:width 0.2s linear}
+.loading-text{font-size:0.95rem;color:var(--muted)}
 
-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
+/* results */
+.results{margin-top:10px}
+.top-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.summary,.member{flex:1;min-width:200px;text-align:left;padding:8px}
+.row{margin-top:6px;font-weight:600}
 
-.table {
-  display: grid;
-  width: 90%;
-  margin: 0 auto 20px auto;
-  grid-auto-rows: 8vw;
-}
+/* two-row table (5 columns) */
+.two-row-table{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0}
+.two-row-table .header{padding:10px;background:#f7f7f7;border-radius:8px;font-weight:700;text-align:center}
+.two-row-table .data{padding:10px;background:#fff;border-radius:8px;text-align:right;font-weight:700}
 
-.table div {
-  border: 0.5px solid #555;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* games list */
+.games-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.game-card{background:linear-gradient(145deg,#f9f9f9,#efefef);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+.game-card .time{font-weight:700}
+.game-card .score{font-weight:800}
 
-.data {
-  background-color: #fff;
-}
+/* placement table */
+.placement-table{margin:8px auto;max-width:620px}
+.placement-table table{width:100%;border-collapse:collapse}
+.placement-table th,.placement-table td{border:1px solid #eee;padding:8px;text-align:center}
+.placement-table th{background:#fafafa;font-weight:700}
 
-#bar-chart, #pie-chart {
-  width: 85vw;
-  max-width: 90vw;
-  margin: 10px auto;
-}
+/* chart wrappers */
+.chart-wrap{width:100%;max-width:900px;margin:8px auto}
+canvas{display:block;width:90%;max-width:900px;margin:6px auto}
 
-#loading-container {
-  width: 90vw;
-  margin: 10px auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+/* status */
+.status-msg{color:#b00;text-align:center;margin-top:8px}
 
-#loading-bar {
-  width: 0;
-  height: 6px;
-  background: #4caf50;
-  animation: loading 2s linear infinite;
-}
+/* utility */
+.hidden{display:none}
 
-@keyframes loading {
-  0% { width: 0%; }
-  50% { width: 100%; }
-  100% { width: 0%; }
-}
-
-#loading-text {
-  margin-top: 5px;
-  font-size: 3vw;
-  color: red;
-}
-
-#games-list div {
-  margin: 5px auto;
-  padding: 5px;
-  width: 85vw;
-  border-radius: 6px;
-  background: linear-gradient(to right,#f0f8ff,#e9f4ff);
-  display: flex;
-  justify-content: space-between;
-  font-size: 3vw;
+/* responsive tweaks */
+@media(max-width:640px){
+  .two-row-table{grid-auto-rows:80px}
+  #nameInput{width:100%}
+  .date-display{min-width:120px}
+  .game-card{font-size:0.95rem}
 }
