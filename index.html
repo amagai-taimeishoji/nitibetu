@@ -1,46 +1,94 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>麻雀 日別成績</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>日別成績表示</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div id="search-area">
-    <div id="search-inputs">
-      <select id="year-select"></select>
-      <select id="month-select"></select>
-      <select id="day-select"></select>
-      <input id="name-input" type="text" placeholder="名前を入力してねっ" />
-      <button id="search-button">検索</button>
-    </div>
-    <p id="status-message"></p>
+  <div class="container">
+
+    <!-- 更新状況（見出しはシマシマ） -->
+    <section class="update-area">
+      <div class="update-title">// 更新状況 (最終取得日時)</div>
+      <div class="update-row">
+        <div id="lastUpdated">-</div>
+        <div>更新中《<span id="updateStatus">-</span>》</div>
+      </div>
+    </section>
+
+    <!-- 検索エリア（名前＋カレンダー＋◀️▶️＋検索） -->
+    <section class="search-area">
+      <input id="nameInput" type="text" placeholder="名前を入力してねっ" />
+      <div class="date-controls">
+        <button id="prevBtn" class="nav-btn">◀️</button>
+        <input id="datePicker" type="date" />
+        <button id="nextBtn" class="nav-btn">▶️</button>
+      </div>
+      <button id="searchBtn" class="search-btn">検索</button>
+    </section>
+
+    <!-- ローディング（検索ボタンや日付変更で表示） -->
+    <section id="loadingArea" class="loading-area hidden">
+      <div class="loading-bar">
+        <div class="loading-progress"></div>
+      </div>
+      <div class="loading-text">ロード…チュ♡</div>
+    </section>
+
+    <!-- 結果表示 -->
+    <main id="content" class="hidden">
+      <!-- top summary -->
+      <section class="summary-top">
+        <div class="date-title">// 日付</div>
+        <div id="dateTitle" class="date-display">—</div>
+
+        <div class="summary-numbers">
+          <div>集計人数　　<span id="participants">_人</span></div>
+          <div>総ゲーム数　<span id="totalGames">_半荘</span></div>
+        </div>
+
+        <div class="player-header">No. <span id="playerNo">0000</span>　名前 <span id="playerName">___</span></div>
+      </section>
+
+      <!-- /日別ランキング/ (2行×5列) -->
+      <section class="section">
+        <div class="section-title">// 日別ランキング</div>
+        <div id="dailyRank" class="two-row-table"></div>
+      </section>
+
+      <!-- /日別スコアデータ/ (2行×5列) -->
+      <section class="section">
+        <div class="section-title">// 日別スコアデータ</div>
+        <div id="scoreData" class="two-row-table"></div>
+      </section>
+
+      <!-- /この日のゲーム/ 棒グラフ + カード -->
+      <section class="section">
+        <div class="section-title">// この日のゲーム</div>
+        <div class="chart-wrap">
+          <canvas id="barChart"></canvas>
+        </div>
+        <div id="gameList" class="game-list"></div>
+      </section>
+
+      <!-- /着順データ/ 表 + 円グラフ -->
+      <section class="section">
+        <div class="section-title">// 着順データ</div>
+        <div id="placementTable" class="placement-table"></div>
+        <div class="chart-wrap">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <!-- エラーメッセージ等 -->
+    <div id="statusMessage" class="status-message"></div>
+
   </div>
 
-  <main id="results" style="display:none;">
-    <header id="info">
-      <div id="period"></div>
-      <div id="visitor-count"></div>
-      <div id="member-info"></div>
-    </header>
-
-    <div class="box stripe"><h3>［日別ランキング］</h3></div>
-    <div id="ranking-table" class="table"></div>
-
-    <div class="box stripe"><h3>［日別成績］</h3></div>
-    <div id="score-summary" class="table"></div>
-
-    <div class="box stripe"><h3>［スコアデータ（左→右・時刻順）］</h3></div>
-    <div id="score-list" class="table"></div>
-    <canvas id="bar-chart" height="160"></canvas>
-
-    <div class="box stripe"><h3>［着順割合］</h3></div>
-    <div id="rank-count-table" class="table"></div>
-    <canvas id="pie-chart" height="160"></canvas>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
