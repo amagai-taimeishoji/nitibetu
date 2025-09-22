@@ -1,5 +1,5 @@
 // ========== 設定 (ここを実際のGAS公開URLに置き換えてください) ==========
-const API_URL = "https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec"; // ← ここを変更
+const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; // ← ここを変更
 const YEAR = 2025;
 const MONTH = 10; // 10月（固定）
 const DAY_MIN = 1;
