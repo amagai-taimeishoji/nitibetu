@@ -9,26 +9,26 @@
 <body>
   <main class="wrap">
 
-    <!-- 更新状況（サーバーの updateStatus をそのまま表示） -->
+    <!-- 更新状況（タイトルは常に表示。文字列は検索後に入る） -->
     <section class="update">
       <div class="striped-title">更新状況</div>
-      <div id="updateStatus" class="update-text">—</div>
+      <div id="updateStatus" class="update-text"></div>
     </section>
 
-    <!-- 検索：名前入力・検索ボタン・日付ナビ -->
+    <!-- 検索：名前 + 検索ボタン + 日付ナビ（◀️ select ▶️）-->
     <section class="search">
       <input id="nameInput" type="text" placeholder="名前を入力してねっ" aria-label="名前入力" />
       <button id="searchBtn" class="nav">検索</button>
 
       <div class="date-nav">
         <button id="prevBtn" class="nav">◀️</button>
-        <!-- 日付プルダウン（表示例: 10月1日(水)） -->
+        <!-- セレクトプルダウン（中央） 値は "YYYY/MM/DD" 形式で GAS に渡す -->
         <select id="datePicker" class="date-picker" aria-label="日付選択"></select>
         <button id="nextBtn" class="nav">▶️</button>
       </div>
     </section>
 
-    <!-- ローディング（横長バー、JSで制御） -->
+    <!-- ローディング（横長バー／「ロード…チュ♡」）-->
     <section id="loadingArea" class="loading-area hidden" aria-live="polite">
       <div class="loading-bar-outer">
         <div id="loadingBar" class="loading-bar-inner"></div>
@@ -46,41 +46,42 @@
         </div>
         <div class="member">
           <div class="striped-title">プレイヤー</div>
-          <div class="row">No. <span id="playerNo">0000</span>　<span id="playerName">---</span></div>
+          <div class="row">No. <span id="playerNo">----</span>　<span id="playerName">---</span></div>
         </div>
       </div>
 
-      <!-- 日別ランキング -->
+      <!-- 日別ランキング（2行×5列：上=項目、下=その人の順位のみ） -->
       <section class="section">
         <div class="striped-title">日別ランキング</div>
         <div id="rankingTable" class="two-row-table"></div>
       </section>
 
-      <!-- 日別スコアデータ -->
+      <!-- 日別スコアデータ（2行×5列：上=項目、下=その人の数値） -->
       <section class="section">
         <div class="striped-title">日別スコアデータ</div>
         <div id="scoreTable" class="two-row-table"></div>
       </section>
 
-      <!-- この日のゲーム（グラフ + リスト） -->
+      <!-- この日のゲーム（グラフ + カードリスト） -->
       <section class="section">
         <div class="striped-title">この日のゲーム</div>
         <div class="chart-wrap"><canvas id="barChart" height="140"></canvas></div>
         <div id="gamesList" class="games-list"></div>
       </section>
 
-      <!-- 着順 -->
+      <!-- 着順データ -->
       <section class="section">
-        <div class="striped-title">この日の着順データ</div>
+        <div class="striped-title">着順データ</div>
         <div id="placementTable" class="placement-table"></div>
         <div class="chart-wrap"><canvas id="pieChart" height="140"></canvas></div>
       </section>
     </section>
 
     <div id="statusMessage" class="status-msg" role="status" aria-live="polite"></div>
+
   </main>
 
-  <!-- Chart.js（CDN） -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
