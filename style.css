@@ -1,89 +1,103 @@
-:root{
-  --muted:#666;
-  --stripe1: rgba(0,0,0,0.04);
-  --stripe2: rgba(0,0,0,0.02);
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #333;
+  text-align: center;
 }
 
-/* 全体 */
-*{box-sizing:border-box;font-family: "Noto Sans JP", system-ui, -apple-system, "Helvetica Neue", Arial;}
-body{margin:0;background:#fff;color:#111;padding:12px;}
-.container{max-width:1100px;margin:0 auto;padding-bottom:60px;}
-
-/* 更新状況 */
-.update-area{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
-.update-title{display:inline-block;padding:6px 10px;border-radius:6px;font-weight:700;background:repeating-linear-gradient(45deg,var(--stripe1) 0 10px,var(--stripe2) 10px 20px);}
-.update-row{margin-top:6px;color:var(--muted)}
-
-/* 検索エリア */
-.search-area{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
-#nameInput{padding:8px;border-radius:6px;border:1px solid #ddd;font-size:1rem;width:200px;}
-.date-controls{display:flex;align-items:center;gap:8px;}
-#datePicker{padding:8px;border-radius:6px;border:1px solid #ddd;}
-.nav-btn{padding:6px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:1rem;}
-.search-btn{padding:8px 12px;border-radius:6px;border:0;background:#111;color:#fff;cursor:pointer;}
-
-/* loading */
-.loading-area{display:flex;flex-direction:column;align-items:center;gap:8px;margin:12px 0;}
-.loading-bar{width:80%;max-width:600px;height:14px;background:#eee;border-radius:10px;overflow:hidden;}
-.loading-progress{height:100%;width:100%;background:linear-gradient(90deg,#eee,#ddd,#eee);animation:loadAnim 1.6s infinite;transform:translateX(-100%);}
-@keyframes loadAnim{0%{transform:translateX(-100%)}50%{transform:translateX(0%)}100%{transform:translateX(100%)}}
-.loading-text{font-size:0.95rem;color:var(--muted);}
-
-/* hide/show */
-.hidden{display:none;}
-
-/* top summary */
-.summary-top{margin:12px 0;padding:6px;}
-.date-title{display:inline-block;padding:6px 10px;border-radius:6px;font-weight:700;background:repeating-linear-gradient(45deg,var(--stripe1) 0 10px,var(--stripe2) 10px 20px);}
-.date-display{margin-top:6px;font-weight:700;}
-.summary-numbers{display:flex;gap:20px;margin:10px 0;font-weight:600;}
-.player-header{margin:8px 0;padding:8px;background:#fafafa;border:1px solid #eee;border-radius:6px;}
-
-/* section */
-.section{margin:14px 0;}
-.section-title{display:inline-block;padding:6px 10px;border-radius:6px;font-weight:700;background:repeating-linear-gradient(45deg,var(--stripe1) 0 10px,var(--stripe2) 10px 20px);margin-bottom:8px;}
-
-/* two-row 5-col tables */
-.two-row-table{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px;}
-.two-row-table .header-cell,
-.two-row-table .data-cell{
-  padding:10px;text-align:center;border-radius:6px;background:#fff;border:1px solid #eee;min-height:46px;
+/* ヘッダー */
+.header {
+  padding: 15px;
+  background: #f7f7f7;
+  border-bottom: 2px solid #eee;
 }
-.two-row-table .header-cell{font-weight:700;background:repeating-linear-gradient(45deg,var(--stripe1) 0 10px,var(--stripe2) 10px 20px);}
-.two-row-table .data-cell{font-weight:700;color:#222;}
-
-/* game list */
-.game-list{margin-top:12px;}
-.game-card{
-  background: linear-gradient(145deg, #f9f9f9, #efefef);
-  border-radius: 12px;
-  box-shadow: 4px 4px 12px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.6);
-  padding: 12px 16px;
-  margin: 12px auto;
-  max-width: 640px;
-  font-size: 1rem;
+.header h1 {
+  margin: 0;
+  font-size: 1.8em;
 }
-.game-card h4{margin:0 0 6px 0;font-size:1.05rem;}
-.game-info{display:flex;justify-content:space-between;align-items:center;font-weight:700;color:#333;}
-
-/* placement table */
-.placement-table{margin-top:12px;overflow:auto;}
-.placement-table table{border-collapse:collapse;width:100%;max-width:640px;margin:auto;background:#fff;border-radius:6px;overflow:hidden;}
-.placement-table th, .placement-table td{padding:8px;text-align:center;border:1px solid #f5f5f5;}
-.placement-table th{background:repeating-linear-gradient(45deg,var(--stripe1) 0 10px,var(--stripe2) 10px 20px);font-weight:700;}
-
-/* charts */
-.chart-wrap{margin:12px 0;max-width:900px;}
-canvas{max-width:100%;display:block;margin:0 auto 12px;}
-
-/* responsive */
-@media(max-width:700px){
-  #nameInput{width:50vw;}
-  .summary-numbers{flex-direction:column;align-items:flex-start;font-size:4.5vw;}
-  .game-card{font-size:4vw;}
-  .nav-btn{font-size:6vw;}
-  #datePicker{font-size:4vw;}
+#updateStatus {
+  font-size: 0.9em;
+  color: #666;
 }
 
-/* status message */
-.status-message{color:#b00;text-align:center;margin-top:10px;}
+/* 検索欄 */
+.search-area {
+  margin: 15px 0;
+}
+.search-area input,
+.search-area button {
+  padding: 8px 10px;
+  margin: 5px;
+  font-size: 1em;
+}
+
+/* シマシマタイトル */
+.striped-title {
+  background: repeating-linear-gradient(
+    -45deg,
+    #ffe0f0,
+    #ffe0f0 10px,
+    #fff 10px,
+    #fff 20px
+  );
+  padding: 8px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+/* 表 */
+table {
+  border-collapse: collapse;
+  margin: 0 auto;
+  width: 90%;
+}
+td, th {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}
+.section {
+  margin: 20px 0;
+}
+
+/* ローディング */
+.loading-container {
+  text-align: center;
+  margin: 20px 0;
+}
+.loading-bar {
+  width: 80%;
+  height: 8px;
+  margin: 0 auto;
+  background: #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.loading-bar::before {
+  content: "";
+  position: absolute;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff99cc, #ff66aa);
+  animation: loadingAnim 1.5s infinite;
+}
+@keyframes loadingAnim {
+  0%   { left: -40%; }
+  50%  { left: 100%; }
+  100% { left: -40%; }
+}
+
+/* ゲームリスト */
+#gameList {
+  list-style: none;
+  padding: 0;
+}
+#gameList li {
+  margin: 6px 0;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
