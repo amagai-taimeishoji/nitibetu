@@ -11,7 +11,7 @@
 body{font-family:"Noto Sans JP",system-ui,-apple-system,Arial; margin:0; background:var(--bg); color:#222;}
 .wrap{max-width:900px;margin:8px auto;padding:8px}
 
-/* striped titles like reference */
+/* シマシマ見出し（参考CSS寄せ） */
 .striped-title{
   display:inline-block;
   padding:8px 12px;
@@ -21,11 +21,11 @@ body{font-family:"Noto Sans JP",system-ui,-apple-system,Arial; margin:0; backgro
   margin-bottom:8px;
 }
 
-/* update */
+/* 更新 */
 .update{margin-bottom:10px}
 .update-text{margin-top:6px;color:var(--muted)}
 
-/* search */
+/* 検索領域 */
 .search{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center;margin-bottom:8px}
 #nameInput{padding:8px 12px;border-radius:8px;border:1px solid #ddd;width:48%;min-width:180px;font-size:1rem}
 #searchBtn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:linear-gradient(45deg,#4caf50,#81c784);color:#fff;cursor:pointer}
@@ -33,16 +33,15 @@ body{font-family:"Noto Sans JP",system-ui,-apple-system,Arial; margin:0; backgro
 .date-nav{display:flex;align-items:center;gap:8px}
 .nav{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
 .nav[disabled]{opacity:.4;cursor:default}
-.date-display{min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid #eee;background:#fafafa;font-weight:700}
 .date-picker{padding:8px;border-radius:8px;border:1px solid #ddd; font-weight:700;}
 
-/* loading */
+/* ローディング */
 .loading-area{display:flex;flex-direction:column;align-items:center;gap:6px;margin:10px 0}
 .loading-bar-outer{width:90%;height:10px;background:#eee;border-radius:999px;overflow:hidden}
 .loading-bar-inner{height:100%;width:0;background:linear-gradient(90deg,#ffd1e6,var(--accent));transition:width 0.2s linear}
 .loading-text{font-size:0.95rem;color:var(--muted)}
 
-/* results */
+/* 結果 */
 .results{margin-top:10px}
 .top-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between}
 .summary,.member{flex:1;min-width:200px;text-align:left;padding:8px}
@@ -79,6 +78,5 @@ canvas{display:block;width:90%;max-width:900px;margin:6px auto}
 @media(max-width:640px){
   .two-row-table{grid-auto-rows:80px}
   #nameInput{width:100%}
-  .date-display{min-width:120px}
   .game-card{font-size:0.95rem}
 }
