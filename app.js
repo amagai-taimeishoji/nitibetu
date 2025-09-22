@@ -21,7 +21,8 @@ let dailyRankingEl, dailyScoresEl, gameListEl, scoreBarCanvas, rankCountsEl, ran
 let barChartInstance = null;
 let pieChartInstance = null;
 
-/* ====== ヘルパー ====== */
+/* ====== 定数・要素 ====== */
+const datePicker = document.getElementById("dateSelect");  // ←追加
 const WEEK = ['日','月','火','水','木','金','土'];
 const pad = n => String(n).padStart(2,'0');
 function tokyoNow(){ return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Tokyo'})); }
@@ -35,10 +36,17 @@ function gasDateStr(year, month, day){
 
 /* ====== 日付プルダウン 初期化 ====== */
 function initDatePicker(){
+  // 今年・今月を基準にする例
+  const now = tokyoNow();
+  const YEAR = now.getFullYear();
+  const MONTH = now.getMonth() + 1;
+  const LAST_DAY = new Date(YEAR, MONTH, 0).getDate();
+
   if (!datePicker) {
     console.warn("datePicker が見つかりません（initDatePicker で）。");
     return;
   }
+
   datePicker.innerHTML = '';
   for(let d=1; d<=LAST_DAY; d++){
     const opt = document.createElement('option');
@@ -48,14 +56,13 @@ function initDatePicker(){
   }
 
   // 初期日は東京時間20時ルール
-  const t = tokyoNow();
-  let day = t.getDate();
-  if (t.getHours() < 20) day = day - 1;
+  let day = now.getDate();
+  if (now.getHours() < 20) day = day - 1;
   if (day < 1) day = 1;
   if (day > LAST_DAY) day = LAST_DAY;
   const idx = Math.max(0, Math.min(LAST_DAY-1, day-1));
   datePicker.selectedIndex = idx;
-  updatePrevNextVisibility();
+
   console.log(`datePicker 初期化: selectedIndex=${idx}`);
 }
 
