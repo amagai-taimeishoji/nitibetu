@@ -1,390 +1,440 @@
-/* script.js - 修正版
-   - 日付プルダウンの "オプションなし" 問題を解消
-   - DOM 要素取得を確実に（DOMContentLoaded 内で取得）
-   - dateSelect / datePicker の ID 揺れに対応
-   - 既存の仕様（ローディング / fetch / 描画）は維持
-*/
-
-/* ====== 設定 ====== */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec";
+// ========== 設定 (ここを実際のGAS公開URLに置き換えてください) ==========
+const API_URL = "https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec"; // ← ここを変更
 const YEAR = 2025;
-const MONTH = 10;
-const LAST_DAY = 30; // 月ごとにコピーして変更してください
+const MONTH = 10; // 10月（固定）
+const DAY_MIN = 1;
+const DAY_MAX = 30;
+const LOADING_DURATION_MS = 15000; // 15秒でMAX（アニメーション）
+// =======================================================================
 
-/* ====== 変数（後で DOM を代入） ====== */
-let nameInput, searchBtn, datePicker, prevDayBtn, nextDayBtn, updateStatusEl;
-let loaderArea, loadingBar, resultsSection, statusMsg;
-let participantCountEl, totalGamesEl, playerNoEl, playerNameEl;
-let dailyRankingEl, dailyScoresEl, gameListEl, scoreBarCanvas, rankCountsEl, rankPieCanvas;
+let barChart = null;
+let pieChart = null;
+let loadingStart = null;
+let loadingRafId = null;
 
-/* Chart インスタンス */
-let barChartInstance = null;
-let pieChartInstance = null;
+// ---- DOM ----
+const nameInput = document.getElementById("name-input");
+const dateSelect = document.getElementById("date-select");
+const prevBtn = document.getElementById("prev-day");
+const nextBtn = document.getElementById("next-day");
+const searchBtn = document.getElementById("search-button");
+const statusMsg = document.getElementById("status-message");
+const loadingContainer = document.getElementById("loading-container");
+const loadingFill = document.getElementById("loading-fill");
+const loadingText = document.getElementById("loading-text");
 
-/* ====== 定数 ====== */
-const WEEK = ['日','月','火','水','木','金','土'];
-const pad = n => String(n).padStart(2,'0');
-function tokyoNow(){ return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Tokyo'})); }
-function dateLabel(year, month, day){
-  const d = new Date(year, month-1, day);
-  return `${d.getMonth()+1}月${d.getDate()}日(${WEEK[d.getDay()]})`;
+const resultsDiv = document.getElementById("results");
+const updateStatusDiv = document.getElementById("update-status");
+const visitorCountDiv = document.getElementById("visitor-count");
+const memberInfoDiv = document.getElementById("member-info");
+
+const rankingTable = document.getElementById("ranking-table");
+const scoredataTable = document.getElementById("scoredata-table");
+const tenhanList = document.getElementById("tenhan-list");
+const barCanvas = document.getElementById("bar-chart");
+const rankCountTable = document.getElementById("rank-count-table");
+const pieCanvas = document.getElementById("pie-chart");
+
+// ---- 初期化 ----
+initDateSelect();
+setInitialDate();
+attachEvents();
+
+// ----------------- functions -----------------
+
+function initDateSelect(){
+  dateSelect.innerHTML = "";
+  for(let d=DAY_MIN; d<=DAY_MAX; d++){
+    const opt = document.createElement("option");
+    const dt = new Date(YEAR, MONTH-1, d);
+    const weekday = dt.toLocaleDateString("ja-JP", { weekday: "short", timeZone: "Asia/Tokyo" });
+    opt.value = formatDateSlash(dt); // yyyy/MM/dd
+    opt.textContent = `${MONTH}月${d}日 (${weekday})`;
+    dateSelect.appendChild(opt);
+  }
 }
-function gasDateStr(year, month, day){
-  return `${year}/${pad(month)}/${pad(day)}`;
+
+function setInitialDate(){
+  // JST 現在時刻を取得
+  const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+  const nowJst = new Date(nowStr);
+  let baseDate = new Date(nowJst);
+  if (nowJst.getHours() < 20) {
+    // 前日
+    baseDate.setDate(nowJst.getDate() - 1);
+  }
+  // clamp into month range
+  if (baseDate.getFullYear() !== YEAR || (baseDate.getMonth()+1) !== MONTH) {
+    // out of target month -> default to first available (DAY_MIN)
+    baseDate = new Date(YEAR, MONTH-1, DAY_MIN);
+  }
+  const val = formatDateSlash(baseDate);
+  dateSelect.value = val;
+  updateNavButtons();
 }
 
-/* ====== 日付プルダウン 初期化 ====== */
-function initDatePicker(){
-  if (!datePicker) {
-    console.warn("datePicker が見つかりません（initDatePicker で）。");
+function attachEvents(){
+  prevBtn.addEventListener("click", ()=>{
+    changeSelectedDay(-1);
+    fetchAndRender(); // prev arrow triggers fetch
+  });
+  nextBtn.addEventListener("click", ()=>{
+    changeSelectedDay(1);
+    fetchAndRender(); // next arrow triggers fetch
+  });
+  dateSelect.addEventListener("change", ()=>{
+    updateNavButtons();
+    // spec: プルダウン変更時は fetch & 描画
+    fetchAndRender();
+  });
+  searchBtn.addEventListener("click", ()=>{
+    fetchAndRender();
+  });
+}
+
+function changeSelectedDay(delta){
+  const current = parseSelectedDay();
+  let newDay = current + delta;
+  if (newDay < DAY_MIN) newDay = DAY_MIN;
+  if (newDay > DAY_MAX) newDay = DAY_MAX;
+  const newDate = new Date(YEAR, MONTH-1, newDay);
+  dateSelect.value = formatDateSlash(newDate);
+  updateNavButtons();
+}
+
+function parseSelectedDay(){
+  // dateSelect.value is yyyy/MM/dd
+  const parts = dateSelect.value.split("/");
+  return parseInt(parts[2], 10);
+}
+
+function updateNavButtons(){
+  const day = parseSelectedDay();
+  prevBtn.hidden = (day <= DAY_MIN);
+  nextBtn.hidden = (day >= DAY_MAX);
+}
+
+// ---------- Loading animation (non-looping, 15s to MAX) ----------
+function startLoading(){
+  loadingContainer.style.display = "flex";
+  loadingFill.style.width = "0%";
+  loadingText.style.display = "block";
+  statusMsg.textContent = "ロード、チュ…♡";
+  loadingStart = performance.now();
+  cancelAnimationFrame(loadingRafId);
+  loadingRafId = requestAnimationFrame(loadingTick);
+}
+function loadingTick(now){
+  const elapsed = now - loadingStart;
+  const pct = Math.min(100, (elapsed / LOADING_DURATION_MS) * 100);
+  loadingFill.style.width = pct + "%";
+  if (pct < 100) {
+    loadingRafId = requestAnimationFrame(loadingTick);
+  } else {
+    cancelAnimationFrame(loadingRafId);
+  }
+}
+function stopLoading(){
+  cancelAnimationFrame(loadingRafId);
+  loadingFill.style.width = "100%";
+  setTimeout(()=>{
+    loadingContainer.style.display = "none";
+    statusMsg.textContent = "";
+  }, 250);
+}
+
+// ---------- Fetch & render ----------
+async function fetchAndRender(){
+  const name = nameInput.value.trim();
+  if (!name) {
+    statusMsg.textContent = "名前を入力してねっ";
     return;
   }
+  const dateParam = dateSelect.value; // yyyy/MM/dd per spec
+  // start loading
+  startLoading();
+  resultsDiv.style.display = "none";
+  updateStatusDiv.textContent = "";
+  visitorCountDiv.textContent = "";
 
-  datePicker.innerHTML = '';
-  for(let d=1; d<=LAST_DAY; d++){
-    const opt = document.createElement('option');
-    opt.value = gasDateStr(YEAR, MONTH, d);
-    opt.textContent = dateLabel(YEAR, MONTH, d);
-    datePicker.appendChild(opt);
-  }
-
-  // 初期日は東京時間20時ルール
-  const now = tokyoNow();
-  let day = now.getDate();
-  if (now.getHours() < 20) day = day - 1;
-  if (day < 1) day = 1;
-  if (day > LAST_DAY) day = LAST_DAY;
-  const idx = Math.max(0, Math.min(LAST_DAY-1, day-1));
-  datePicker.selectedIndex = idx;
-
-  console.log(`datePicker 初期化: selectedIndex=${idx}`);
-}
-function updatePrevNextVisibility(){
-  if (!datePicker || !prevDayBtn || !nextDayBtn) return;
-  const idx = datePicker.selectedIndex;
-  prevDayBtn.style.display = idx <= 0 ? 'none' : 'inline-block';
-  nextDayBtn.style.display = idx >= datePicker.options.length-1 ? 'none' : 'inline-block';
-}
-
-/* ====== ローディング制御（15秒で満杯） ====== */
-let loadingTimer = null;
-function startLoading(){
-  if (!loaderArea || !loadingBar) return;
-  loaderArea.classList.remove('hidden');
-  if (resultsSection) resultsSection.classList.add('hidden');
-  if (statusMsg) statusMsg.textContent = '';
-
-  loadingBar.style.transition = 'width 15s linear';
-  loadingBar.style.width = '100%';
-
-  clearTimeout(loadingTimer);
-  loadingTimer = setTimeout(()=>{
-    loadingBar.style.transition = '';
-    loadingBar.style.width = '100%';
-    if (statusMsg) statusMsg.textContent = '読み込みが長いです…';
-  }, 16000);
-}
-
-function stopLoading(){
-  clearTimeout(loadingTimer);
-  if (!loadingBar) return;
-  loadingBar.style.transition = 'width 0.2s linear';
-  loadingBar.style.width = '100%';
-  setTimeout(()=>{
-    if (loaderArea) loaderArea.classList.add('hidden');
-    if (resultsSection) resultsSection.classList.remove('hidden');
-    loadingBar.style.transition = '';
-    loadingBar.style.width = '0%';
-  }, 240);
-}
-
-/* ====== データ取得 ====== */
-async function fetchFromGAS(showLoad=true){
-  if (!nameInput || !datePicker) return null;
-  const name = nameInput.value.trim();
-  const date = datePicker.value;
-  if (!name){
-    if (statusMsg) statusMsg.textContent = '名前を入力してねっ';
-    return null;
-  }
-
-  if (showLoad) startLoading();
   try {
-    const url = `${GAS_URL}?name=${encodeURIComponent(name)}&date=${encodeURIComponent(date)}`;
+    const url = `${API_URL}?name=${encodeURIComponent(name)}&date=${encodeURIComponent(dateParam)}`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (json.error) throw new Error(json.error);
-    return json;
-  } catch(err){
-    console.error('fetchFromGAS error:', err);
-    if (statusMsg) statusMsg.textContent = `読み込みエラー: ${err.message}`;
-    return null;
-  } finally {
-    if (showLoad) stopLoading();
+    const data = await res.json();
+
+    if (data.error) {
+      stopLoading();
+      statusMsg.textContent = data.error;
+      return;
+    }
+
+    // updateStatus
+    updateStatusDiv.textContent = data.updateStatus || "";
+
+    // 集計人数 (サーバは allStats を返す)
+    const all = data.all || [];
+    const uniqueCount = data.集計人数 || all.filter(p => p.half>0).length;
+    visitorCountDiv.textContent = `集計人数: ${uniqueCount} 人`;
+
+    // member info
+    memberInfoDiv.textContent = `No. ${data.no || "不明"}   ${data.name}`;
+
+    // 全員ランキング計算 (フロント)
+    const rankMaps = buildAllRankMaps(all);
+
+    // 日別ランキング表（1行:項目, 2行:順位(位)）
+    const rankingRow = [
+      formatRankValue(rankMaps.half[data.name]),
+      formatRankValue(rankMaps.total[data.name]),
+      formatRankValue(rankMaps.high[data.name]),
+      formatRankValue(rankMaps.avg[data.name]),
+      formatRankValue(rankMaps.avgRank[data.name])
+    ];
+    createTable("ranking-table", [
+      ["累計半荘数\nランキング","総スコア\nランキング","最高スコア\nランキング","平均スコア\nランキング","平均着順\nランキング"],
+      rankingRow
+    ], 5);
+
+    // 日別成績（数値表）
+    const userSummary = data.summary || {};
+    createTable("scoredata-table", [
+      ["累計半荘数","総スコア","最高スコア","平均スコア","平均着順"],
+      [
+        userSummary.半荘数 != null ? `${userSummary.半荘数}半荘` : "データなし",
+        userSummary.総スコア != null ? `${Number(userSummary.総スコア).toFixed(1)}pt` : "データなし",
+        userSummary.最高スコア != null ? `${Number(userSummary.最高スコア).toFixed(1)}pt` : "データなし",
+        userSummary.平均スコア != null ? `${Number(userSummary.平均スコア).toFixed(3)}pt` : "データなし",
+        userSummary.平均着順 != null ? `${Number(userSummary.平均着順).toFixed(3)}位` : "データなし"
+      ]
+    ], 5);
+
+    // ゲームリスト（時刻順）
+    const games = (data.games || []).slice();
+    const sortedGames = games.slice().sort((a,b)=>{
+      // a.time like "16:40:00" or "" -> create Date
+      const ta = parseTimeForSort(data.date, a.time);
+      const tb = parseTimeForSort(data.date, b.time);
+      return ta - tb;
+    });
+    renderGameList(sortedGames);
+
+    // 棒グラフ
+    createBarChart(sortedGames);
+
+    // 着順カウント表と円グラフ
+    const rankCounts = countRanks(sortedGames);
+    createRankCountTable(rankCounts);
+    createPieChart(rankCounts);
+
+    // show results
+    resultsDiv.style.display = "block";
+    stopLoading();
+
+  } catch (err) {
+    stopLoading();
+    console.error(err);
+    statusMsg.textContent = `成績更新チュ♡今は見れません (${err.message})`;
   }
 }
 
-/* ====== 計算・描画ユーティリティ（既存ロジック） ====== */
-function computeRanks(all, targetName){
-  const fields = [
-    {key:'半荘数', higherBetter:true},
-    {key:'総スコア', higherBetter:true},
-    {key:'最高スコア', higherBetter:true},
-    {key:'平均スコア', higherBetter:true},
-    {key:'平均着順', higherBetter:false}
-  ];
-  const ranks = {};
-  const participants = Array.isArray(all) ? all : [];
-  fields.forEach(f=>{
-    const arr = participants.slice();
-    arr.sort((a,b)=>{
-      const va = (a[f.key] == null) ? (f.key==='最高スコア' ? -Infinity : 0) : Number(a[f.key]);
-      const vb = (b[f.key] == null) ? (f.key==='最高スコア' ? -Infinity : 0) : Number(b[f.key]);
-      if (va === vb){
-        const sa = Number(a['総スコア'] || 0);
-        const sb = Number(b['総スコア'] || 0);
-        if (sb !== sa) return sb - sa;
-        return String(a.name || '').localeCompare(String(b.name || ''));
+// ---------- Utilities ----------
+
+function formatDateSlash(d){
+  const y = d.getFullYear();
+  const m = ('0'+(d.getMonth()+1)).slice(-2);
+  const day = ('0'+d.getDate()).slice(-2);
+  return `${y}/${m}/${day}`;
+}
+
+function parseTimeForSort(dateStr, timeStr){
+  // dateStr "yyyy/MM/dd", timeStr "HH:mm:ss"
+  if (!timeStr) return new Date(dateStr + "T00:00:00+09:00").getTime();
+  const iso = dateStr.replace(/\//g,'-') + 'T' + timeStr + '+09:00';
+  return new Date(iso).getTime();
+}
+
+// build rank maps (standard competition ranking; same value -> same rank; next rank = index+1)
+function buildAllRankMaps(all){
+  // all: array of {name, half, total, high, avg, avgRank}
+  const copy = all.slice();
+
+  function calc(key, asc=false){
+    const arr = copy.map(a=>({name:a.name, val: a[key]==null ? (asc? Infinity : -Infinity) : a[key]}));
+    arr.sort((x,y)=> asc ? x.val - y.val : y.val - x.val);
+    const map = {};
+    let prev = null;
+    let lastRank = 0;
+    for (let i=0;i<arr.length;i++){
+      const it = arr[i];
+      if (prev === it.val) {
+        map[it.name] = lastRank;
+      } else {
+        lastRank = i+1;
+        map[it.name] = lastRank;
+        prev = it.val;
       }
-      return f.higherBetter ? (vb - va) : (va - vb);
-    });
-    const idx = arr.findIndex(p => p.name === targetName);
-    ranks[f.key] = idx >= 0 ? `${idx+1}位` : 'データなし';
-  });
-  return ranks;
-}
-
-function computeTotalGames(all, targetDate){
-  const times = new Set();
-  (all || []).forEach(p=>{
-    (p.games || []).forEach(g=>{
-      if(!g || !g.time) return;
-      const d = (g.date || '').replace(/-/g,'/');
-      if (d === targetDate) times.add(g.time);
-    });
-  });
-  return times.size;
-}
-
-function countPlacements(games){
-  const keys = ['1','1.5','2','2.5','3','3.5','4'];
-  const out = {};
-  keys.forEach(k=>out[k]=0);
-  (games || []).forEach(g=>{
-    if (g == null || g.rank == null) return;
-    const k = String(g.rank);
-    if (out[k] !== undefined) out[k] += 1;
-  });
-  return out;
-}
-
-function buildTwoRowTable(container, headers, values){
-  container.innerHTML = '';
-  container.style.gridTemplateColumns = `repeat(${headers.length}, 1fr)`;
-  headers.forEach(h=>{
-    const div = document.createElement('div');
-    div.className = 'header';
-    div.textContent = h;
-    container.appendChild(div);
-  });
-  values.forEach(v=>{
-    const div = document.createElement('div');
-    div.className = 'data';
-    div.textContent = v;
-    container.appendChild(div);
-  });
-}
-
-/* ====== グラフ描画 ====== */
-function createBarChart(games){
-  const labels = games.map(g => g.time ? g.time.slice(0,5) : '');
-  const dataScores = games.map(g => Number(g.score||0));
-  const maxAbs = Math.max(1, ...dataScores.map(n=>Math.abs(n)));
-  const bound = Math.ceil(maxAbs * 1.1);
-
-  if (barChartInstance) barChartInstance.destroy();
-  const ctx = scoreBarCanvas.getContext('2d');
-  barChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets: [{ label:'スコア', data: dataScores, backgroundColor: dataScores.map(v=>v>=0? '#4caf50':'#f44336') }] },
-    options: {
-      animation:false, responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-      scales:{ y:{ min:-bound, max:bound, ticks:{ stepSize: Math.ceil(bound/5) } } }
     }
+    return map;
+  }
+
+  return {
+    half: calc("half", false),
+    total: calc("total", false),
+    high: calc("high", false),
+    avg: calc("avg", false),
+    avgRank: calc("avgRank", true) // 小さい方が上位
+  };
+}
+
+function formatRankValue(v){
+  return v == null ? "データなし" : `${v}位`;
+}
+
+// createTable: id, rows(array-of-arrays), cols
+function createTable(id, rows, cols){
+  const table = document.getElementById(id);
+  table.innerHTML = "";
+  table.style.gridTemplateColumns = `repeat(${cols}, 18vw)`;
+  rows.forEach((row, rowIndex)=>{
+    row.forEach(cell=>{
+      const div = document.createElement("div");
+      div.textContent = cell;
+      div.className = rowIndex % 2 === 0 ? "header" : "data";
+      if (!cell || cell.toString().trim()==="") div.classList.add("empty-cell");
+      table.appendChild(div);
+    });
+  });
+}
+
+function renderGameList(games){
+  tenhanList.innerHTML = "";
+  if (!games || games.length === 0) {
+    const div = document.createElement("div");
+    div.className = "score-card";
+    div.textContent = "スコアなし";
+    tenhanList.appendChild(div);
+    return;
+  }
+  games.forEach((g, idx)=>{
+    const card = document.createElement("div");
+    card.className = "score-card";
+    const left = document.createElement("div");
+    left.className = "card-left";
+    left.innerHTML = `<strong>${idx+1}.</strong> <span>${g.time || "-"}</span>`;
+    const right = document.createElement("div");
+    right.innerHTML = `<span>${formatScoreForDisplay(g.score)}</span>　<span>${g.rank!=null? g.rank + "着":"着順なし"}</span>`;
+    card.appendChild(left);
+    card.appendChild(right);
+    tenhanList.appendChild(card);
+  });
+}
+
+function formatScoreForDisplay(s){
+  if (s == null || isNaN(s)) return "データ不足";
+  if (Math.abs(s - Math.round(s)) < 1e-6) return `${s}pt`;
+  return `${Number(s).toFixed(1)}pt`;
+}
+
+// ---- Bar chart (center 0) ----
+function createBarChart(games){
+  if (barChart) barChart.destroy();
+  const ctx = barCanvas.getContext("2d");
+  const labels = games.map(g => g.time || "");
+  const dataVals = games.map(g => Number(g.score || 0));
+  if (dataVals.length === 0) {
+    // clear canvas
+    ctx.clearRect(0, 0, barCanvas.width, barCanvas.height);
+    return;
+  }
+  const maxVal = Math.max(...dataVals);
+  const minVal = Math.min(...dataVals);
+  const maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal)) * 1.1 || 10;
+
+  const bg = dataVals.map(v => v >= 0 ? "rgba(76,175,80,0.9)" : "rgba(244,67,54,0.9)");
+
+  barChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "スコア",
+        data: dataVals,
+        backgroundColor: bg
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          min: -maxAbs,
+          max: maxAbs,
+          ticks: { stepSize: Math.ceil(maxAbs/5) }
+        }
+      }
+    }
+  });
+}
+
+// ---- Rank counts (1,1.5,2,2.5,3,3.5,4) ----
+function countRanks(games){
+  const keys = ["1","1.5","2","2.5","3","3.5","4"];
+  const counts = {};
+  keys.forEach(k => counts[k]=0);
+  games.forEach(g=>{
+    if (g.rank==null) return;
+    const r = String(g.rank);
+    if (counts[r]!==undefined) counts[r] += 1;
+  });
+  return counts;
+}
+
+function createRankCountTable(counts){
+  const id = "rank-count-table";
+  const table = document.getElementById(id);
+  table.innerHTML = "";
+  const cols = 4;
+  table.style.gridTemplateColumns = `repeat(${cols}, 18vw)`;
+
+  const row1 = ["1着の回数","2着の回数","3着の回数","4着の回数"];
+  const row2 = [`${counts["1"]||0}回`, `${counts["2"]||0}回`, `${counts["3"]||0}回`, `${counts["4"]||0}回`];
+  const row3 = ["1.5着の回数","2.5着の回数","3.5着の回数",""];
+  const row4 = [`${counts["1.5"]||0}回`, `${counts["2.5"]||0}回`, `${counts["3.5"]||0}回`, ""];
+
+  [row1,row2,row3,row4].forEach((r,ri)=>{
+    r.forEach(cell=>{
+      const d = document.createElement("div");
+      d.textContent = cell;
+      d.className = ri%2===0 ? "header" : "data";
+      if (!cell || cell.toString().trim()==="") d.classList.add("empty-cell");
+      table.appendChild(d);
+    });
   });
 }
 
 function createPieChart(counts){
-  const labels = ['1着','1.5着','2着','2.5着','3着','3.5着','4着'];
-  const data = labels.map(l=> counts[l.replace('着','')] || 0 );
-  if (pieChartInstance) pieChartInstance.destroy();
-  const ctx = rankPieCanvas.getContext('2d');
-  pieChartInstance = new Chart(ctx, {
-    type:'doughnut',
-    data:{ labels, datasets:[{ data, backgroundColor: ["#f06262","#f4a261","#f4e266","#b5e36b","#6dd07a","#6ad0c7","#6b8be6"] }]},
-    options:{ animation:false, responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right'}} }
-  });
-}
-
-/* ====== メイン描画 ====== */
-function renderAll(data){
-  if (!data) return;
-  if (updateStatusEl) updateStatusEl.textContent = data.updateStatus || '';
-
-  if (playerNoEl) playerNoEl.textContent = data.no != null ? String(data.no).padStart(4,'0') : '----';
-  if (playerNameEl) playerNameEl.textContent = data.name || '';
-
-  const all = Array.isArray(data.all) ? data.all : [];
-  const games = Array.isArray(data.games) ? data.games.slice().sort((a,b)=>(a.time||'').localeCompare(b.time||'')) : [];
-
-  if (participantCountEl) participantCountEl.textContent = `${all.filter(p=>Number(p.半荘数) > 0).length}`;
-  if (totalGamesEl) totalGamesEl.textContent = `${computeTotalGames(all, datePicker ? datePicker.value : '')}半荘`;
-
-  const ranks = computeRanks(all, data.name);
-  buildTwoRowTable(dailyRankingEl,
-    ['累計半荘数ランキング','総スコアランキング','最高スコアランキング','平均スコアランキング','平均着順ランキング'],
-    [ranks['半荘数'], ranks['総スコア'], ranks['最高スコア'], ranks['平均スコア'], ranks['平均着順']]
-  );
-
-  const s = data.summary || {};
-  const values = [
-    s.半荘数 != null ? `${Number(s.半荘数).toFixed(0)}半荘` : 'データ不足',
-    s.総スコア != null ? `${Number(s.総スコア).toFixed(1)}pt` : 'データ不足',
-    (s.最高スコア != null && s.最高スコア !== -Infinity) ? `${Number(s.最高スコア).toFixed(1)}pt` : 'データ不足',
-    s.平均スコア != null ? `${Number(s.平均スコア).toFixed(3)}pt` : 'データ不足',
-    s.平均着順 != null ? `${Number(s.平均着順).toFixed(3)}着` : 'データ不足'
+  if (pieChart) pieChart.destroy();
+  const ctx = pieCanvas.getContext("2d");
+  const labels = ["1着","1.5着","2着","2.5着","3着","3.5着","4着"];
+  const dataArr = ["1","1.5","2","2.5","3","3.5","4"].map(k=>counts[k]||0);
+  const total = dataArr.reduce((a,b)=>a+b,0);
+  if (total === 0) {
+    ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height);
+    return;
+  }
+  const colors = [
+    "rgba(240,122,122,1)", // 1
+    "rgba(180,180,180,1)", // 1.5 gray
+    "rgba(240,217,109,1)", // 2
+    "rgba(190,190,190,1)", // 2.5
+    "rgba(109,194,122,1)", // 3
+    "rgba(160,160,160,1)", // 3.5
+    "rgba(109,158,217,1)"  // 4
   ];
-  buildTwoRowTable(dailyScoresEl, ['累計半荘数','総スコア','最高スコア','平均スコア','平均着順'], values);
-
-  gameListEl.innerHTML = '';
-  if (!games.length){
-    const n = document.createElement('div'); n.className='game-card'; n.textContent = 'この日のゲームはありません。';
-    gameListEl.appendChild(n);
-  } else {
-    games.forEach((g, i) => {
-      const card = document.createElement('div'); card.className='game-card';
-      const left = document.createElement('div'); left.className='time'; left.textContent = `${i+1} ${g.time ? g.time.slice(0,5) : '--:--'}`;
-      const right = document.createElement('div'); right.className='score';
-      const sc = (g.score == null) ? 0 : Number(g.score);
-      right.textContent = `${(sc>0?'+':'')}${sc.toFixed(1)}pt　${g.rank != null ? `${g.rank}着` : ''}`;
-      card.appendChild(left); card.appendChild(right);
-      gameListEl.appendChild(card);
-    });
-  }
-
-  createBarChart(games);
-
-  const counts = countPlacements(games);
-  rankCountsEl.innerHTML = '';
-  const table = document.createElement('table');
-  const tr1 = document.createElement('tr');
-  ['1着の回数','2着の回数','3着の回数','4着の回数'].forEach(h=>{ const th=document.createElement('th'); th.textContent=h; tr1.appendChild(th); });
-  table.appendChild(tr1);
-  const tr2 = document.createElement('tr');
-  ['1','2','3','4'].forEach(k=>{ const td=document.createElement('td'); td.textContent = counts[k] || 0; tr2.appendChild(td); });
-  table.appendChild(tr2);
-  const tr3 = document.createElement('tr');
-  ['1.5着の回数','2.5着の回数','3.5着の回数',''].forEach(h=>{ const th=document.createElement('th'); th.textContent=h; tr3.appendChild(th); });
-  table.appendChild(tr3);
-  const tr4 = document.createElement('tr');
-  ['1.5','2.5','3.5',''].forEach(k=>{ const td=document.createElement('td'); td.textContent = k ? (counts[k]||0) : ''; tr4.appendChild(td); });
-  table.appendChild(tr4);
-  rankCountsEl.appendChild(table);
-
-  createPieChart(counts);
-
-  if (resultsSection) resultsSection.classList.remove('hidden');
+  pieChart = new Chart(ctx, {
+    type: "pie",
+    data: { labels, datasets:[{ data: dataArr, backgroundColor: colors }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'left'}} }
+  });
 }
-
-/* ====== イベント登録（DOMContentLoaded 内で DOM を取得） ====== */
-document.addEventListener('DOMContentLoaded', () => {
-  // DOM 要素取得（ID 名の揺れに柔軟に対応）
-  nameInput      = document.getElementById('nameInput');
-  searchBtn      = document.getElementById('searchBtn');
-  datePicker     = document.getElementById('datePicker') || document.getElementById('dateSelect') || null;
-  prevDayBtn     = document.getElementById('prevDay') || document.getElementById('prevDayBtn') || null;
-  nextDayBtn     = document.getElementById('nextDay') || document.getElementById('nextBtn') || null;
-  updateStatusEl = document.getElementById('updateStatus');
-
-  loaderArea     = document.getElementById('loader');
-  loadingBar     = document.getElementById('loadingBar');
-  resultsSection = document.getElementById('results');
-  statusMsg      = document.getElementById('statusMsg');
-
-  participantCountEl = document.getElementById('participantCount');
-  totalGamesEl       = document.getElementById('totalGames');
-  playerNoEl         = document.getElementById('playerNo');
-  playerNameEl       = document.getElementById('playerName');
-
-  dailyRankingEl = document.getElementById('dailyRanking');
-  dailyScoresEl  = document.getElementById('dailyScores');
-  gameListEl     = document.getElementById('gameList');
-  scoreBarCanvas = document.getElementById('scoreBarChart');
-  rankCountsEl   = document.getElementById('rankCounts');
-  rankPieCanvas  = document.getElementById('rankPieChart');
-
-  // 存在チェックのログ（デバッグ用）
-  if (!datePicker) console.error('datePicker が見つかりません。HTML の id を確認してください（datePicker または dateSelect）。');
-  if (!nameInput) console.error('nameInput が見つかりません。');
-  if (!searchBtn) console.error('searchBtn が見つかりません。');
-
-  // 日付プルダウン初期化
-  initDatePicker();
-
-  // 検索ボタン
-  if (searchBtn) {
-    searchBtn.addEventListener('click', async () => {
-      if (!nameInput.value.trim()){
-        if (statusMsg) statusMsg.textContent = '名前を入力してねっ';
-        return;
-      }
-      if (statusMsg) statusMsg.textContent = '';
-      const data = await fetchFromGAS(true);
-      if (data) renderAll(data);
-    });
-  }
-
-  // ◀️▶️
-  if (prevDayBtn) prevDayBtn.addEventListener('click', async () => {
-    if (!datePicker) return;
-    const idx = datePicker.selectedIndex;
-    if (idx > 0){
-      datePicker.selectedIndex = idx - 1;
-      updatePrevNextVisibility();
-      if (nameInput.value.trim()){
-        const data = await fetchFromGAS(true);
-        if (data) renderAll(data);
-      }
-    }
-  });
-  if (nextDayBtn) nextDayBtn.addEventListener('click', async () => {
-    if (!datePicker) return;
-    const idx = datePicker.selectedIndex;
-    if (idx < datePicker.options.length - 1){
-      datePicker.selectedIndex = idx + 1;
-      updatePrevNextVisibility();
-      if (nameInput.value.trim()){
-        const data = await fetchFromGAS(true);
-        if (data) renderAll(data);
-      }
-    }
-  });
-
-  // 日付プルダウン変更
-  if (datePicker) datePicker.addEventListener('change', async () => {
-    updatePrevNextVisibility();
-    if (nameInput.value.trim()){
-      const data = await fetchFromGAS(true);
-      if (data) renderAll(data);
-    }
-  });
-
-  // 名前入力時は fetch しない（仕様）
-  if (nameInput) nameInput.addEventListener('input', ()=> {
-    if (statusMsg) statusMsg.textContent = '';
-  });
-
-  // 初期表示
-  if (resultsSection) resultsSection.classList.add('hidden');
-});
