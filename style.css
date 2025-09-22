@@ -1,82 +1,89 @@
-:root{
-  --bg:#ffffff;
-  --muted:#666;
-  --accent:#4caf50;
-  --danger:#f44336;
-  --stripe1: rgba(0,0,0,0.04);
-  --stripe2: rgba(0,0,0,0.02);
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  margin: 20px;
+  background-color: #fdfdfd;
 }
 
-*{box-sizing:border-box}
-body{font-family:"Noto Sans JP",system-ui,-apple-system,Arial; margin:0; background:var(--bg); color:#222;}
-.wrap{max-width:900px;margin:8px auto;padding:8px}
-
-/* シマシマ見出し（参考CSS寄せ） */
-.striped-title{
-  display:inline-block;
-  padding:8px 12px;
-  border-radius:6px;
-  background:repeating-linear-gradient(45deg,var(--stripe1) 0 10px,var(--stripe2) 10px 20px);
-  font-weight:700;
-  margin-bottom:8px;
+.update-status {
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
-/* 更新 */
-.update{margin-bottom:10px}
-.update-text{margin-top:6px;color:var(--muted)}
+.controls, .date-controls {
+  margin-bottom: 10px;
+}
 
-/* 検索領域 */
-.search{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center;margin-bottom:8px}
-#nameInput{padding:8px 12px;border-radius:8px;border:1px solid #ddd;width:48%;min-width:180px;font-size:1rem}
-#searchBtn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:linear-gradient(45deg,#4caf50,#81c784);color:#fff;cursor:pointer}
+#nameInput {
+  padding: 5px;
+  font-size: 14px;
+}
 
-.date-nav{display:flex;align-items:center;gap:8px}
-.nav{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
-.nav[disabled]{opacity:.4;cursor:default}
-.date-picker{padding:8px;border-radius:8px;border:1px solid #ddd; font-weight:700;}
+button {
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
 
-/* ローディング */
-.loading-area{display:flex;flex-direction:column;align-items:center;gap:6px;margin:10px 0}
-.loading-bar-outer{width:90%;height:10px;background:#eee;border-radius:999px;overflow:hidden}
-.loading-bar-inner{height:100%;width:0;background:linear-gradient(90deg,#ffd1e6,var(--accent));transition:width 0.2s linear}
-.loading-text{font-size:0.95rem;color:var(--muted)}
+.date-controls select {
+  padding: 5px;
+  font-size: 14px;
+}
 
-/* 結果 */
-.results{margin-top:10px}
-.top-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between}
-.summary,.member{flex:1;min-width:200px;text-align:left;padding:8px}
-.row{margin-top:6px;font-weight:600}
+.loader {
+  margin: 10px 0;
+}
 
-/* two-row table (5 columns) */
-.two-row-table{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0}
-.two-row-table .header{padding:10px;background:#f7f7f7;border-radius:8px;font-weight:700;text-align:center}
-.two-row-table .data{padding:10px;background:#fff;border-radius:8px;text-align:right;font-weight:700}
+.loader-bar {
+  width: 0%;
+  height: 8px;
+  background-color: #00a000;
+  animation: loadAnim 1.5s forwards;
+}
 
-/* games list */
-.games-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-.game-card{background:linear-gradient(145deg,#f9f9f9,#efefef);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
-.game-card .time{font-weight:700}
-.game-card .score{font-weight:800}
+@keyframes loadAnim {
+  from { width: 0%; }
+  to { width: 100%; }
+}
 
-/* placement table */
-.placement-table{margin:8px auto;max-width:620px}
-.placement-table table{width:100%;border-collapse:collapse}
-.placement-table th,.placement-table td{border:1px solid #eee;padding:8px;text-align:center}
-.placement-table th{background:#fafafa;font-weight:700}
+.loader-text {
+  font-size: 12px;
+  margin-top: 5px;
+}
 
-/* chart wrappers */
-.chart-wrap{width:100%;max-width:900px;margin:8px auto}
-canvas{display:block;width:90%;max-width:900px;margin:6px auto}
+.section-title {
+  background: repeating-linear-gradient(
+    45deg,
+    #ccc,
+    #ccc 10px,
+    #eee 10px,
+    #eee 20px
+  );
+  font-weight: bold;
+  padding: 5px;
+  margin-top: 15px;
+}
 
-/* status */
-.status-msg{color:#b00;text-align:center;margin-top:8px}
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 5px 0 15px;
+}
 
-/* utility */
-.hidden{display:none}
+.ranking-table td, .ranking-table th {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  text-align: center;
+}
 
-/* responsive tweaks */
-@media(max-width:640px){
-  .two-row-table{grid-auto-rows:80px}
-  #nameInput{width:100%}
-  .game-card{font-size:0.95rem}
+.game-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.game-card {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px;
+  margin-bottom: 5px;
+  background-color: #f7f7f7;
 }
