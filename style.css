@@ -1,19 +1,104 @@
-/* --- ベース --- */
+/* ---------------- base ---------------- */
 body {
   font-family: 'Noto Sans JP', sans-serif;
   margin: 0 auto;
   padding: 0;
   background-color: #FFFFFF !important;
   text-align: center;
-  max-width: 100%;
-  height: 200vh;
-  overflow-x: hidden;
+  color: #333;
 }
 
-/* タイトル等 */
-h1,h2,h3 { font-size: 4vw; font-weight: bold; line-height:1.2; color:#333; }
+main { padding: 10px 0 60px; }
 
-/* シマシマ見出しボックス */
+/* top row: update + controls */
+#top-row {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  margin-bottom: 8px;
+}
+
+/* update status */
+#update-wrapper { display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:4px; }
+#update-label { font-size: 3.5vw; color:#666; }
+#update-status { font-size:3.5vw; color:#333; }
+
+/* controls area */
+#controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
+
+#name-input {
+  padding: 8px;
+  font-size: 3.5vw;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  min-width: 36vw;
+  max-width: 46vw;
+}
+
+#search-button {
+  background: linear-gradient(45deg, #4caf50, #81c784);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 3.5vw;
+  cursor: pointer;
+}
+
+/* date control */
+#date-control { display:flex; align-items:center; gap:6px; }
+.nav-btn {
+  font-size: 3.5vw;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  background: #f2f2f2;
+  cursor: pointer;
+}
+.nav-btn[hidden] { display:none; }
+#date-select {
+  padding: 6px 10px;
+  font-size: 3.2vw;
+  border-radius: 6px;
+  border:1px solid #ccc;
+}
+
+/* loading */
+#loading-area {
+  width: 90%;
+  max-width: 90vw;
+  margin: 10px auto;
+  display: none;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+#loading-bar {
+  width: 60%;
+  height: 12px;
+  background: #f2f2f2;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+#loading-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg,#ff8b8b, #ff3b3b);
+  transition: width 0.1s linear;
+}
+#loading-text { color: red; font-size: 3.2vw; }
+
+/* results */
+#results { text-align:center; margin-top:10px; }
+
+/* info */
+#info-container { width:90%; margin: 0 auto 10px; display:flex; flex-direction:column; align-items:flex-start; }
+#visitor-count { font-size: 4.2vw; text-align:left; margin-left:5vw; }
+#member-info { font-size: 4.8vw; text-align:left; margin-left:5vw; margin-top:6px; }
+
+/* stripy section boxes (as provided) */
 .box15, .box16, .box17, .box18 {
   padding: 0.5em 1em;
   max-width: 82vw;
@@ -35,103 +120,16 @@ h1,h2,h3 { font-size: 4vw; font-weight: bold; line-height:1.2; color:#333; }
   margin-top: 10px;
 }
 
-/* 検索エリア */
-#search-area { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; }
-#search-inputs { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
-
-#name-input {
-  padding:8px;
-  font-size:3.5vw;
-  border:1px solid #ccc;
-  border-radius:6px;
-  min-width:30%;
-  max-width:35%;
-}
-
-#date-select {
-  padding:6px 8px;
-  font-size: 3.2vw;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-
-.nav-btn {
-  font-size: 3vw;
-  padding:6px 8px;
-  border-radius: 6px;
-  border: none;
-  background: #eee;
-  cursor: pointer;
-}
-.nav-btn[hidden] { display:none; }
-
-#search-button {
-  background: linear-gradient(45deg, #4caf50, #81c784);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 3.5vw;
-  cursor: pointer;
-}
-
-/* ステータスメッセージ（赤） */
-#status-message { margin-top:6px; font-size:3.5vw; color:red; text-align:center; }
-
-/* Loading bar */
-#loading-container {
-  width: 90%;
-  max-width: 90vw;
-  margin-top: 8px;
-  display: none;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-}
-#loading-bar {
-  width: 60%;
-  height: 12px;
-  background: #f2f2f2;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #ddd;
-}
-#loading-fill {
-  width: 0%;
-  height: 100%;
-  background: linear-gradient(90deg,#ff8b8b, #ff3b3b);
-  transition: width 0.1s linear;
-}
-#loading-text {
-  color: red;
-  font-size: 3.5vw;
-}
-
-/* 結果コンテナ */
-#results { text-align:center; padding-bottom:40px; }
-
-/* info */
-#info-container { width:90%; margin:0 auto 10px; display:flex; flex-direction:column; align-items:flex-start; }
-#update-status { font-size: 3.0vw; text-align:left; color:#444; margin-bottom:4px; }
-#visitor-count { font-size: 4vw; text-align:left; }
-
-/* member info */
-#member-info { text-align:left; padding:5px 10px; font-size: 5vw; }
-
-/* tables (grid) */
-.table { display:grid; width:90%; grid-auto-rows: auto; border-radius:4px; overflow:hidden; margin-left:5vw; margin-bottom:25px; }
+/* table grid */
+.table { display:grid; width:90%; grid-auto-rows: 9vw; border-radius:4px; overflow:hidden; margin-left:5vw; margin-bottom:25px; }
 .table div { border: 0.5px solid #555; display:flex; align-items:center; justify-content:center; padding:6px; box-sizing:border-box; }
 .header { font-weight:bold; background-color:#d0ebff; font-size:2.5vw; text-align:center; }
 .data { background-color:white; font-size:3vw; justify-content:flex-end; text-align:right; padding-right:6px; }
 
-/* hide empty cells */
+/* empty cell hide */
 .empty-cell { display:none; }
 
-/* graphs */
-#bar-chart { width:100%; max-width:90vw; margin-bottom:15px; margin-top:-15px; }
-#pie-chart { display:block; width:85vw; max-width:calc(90vw - 5vw); margin-left:10vw; margin-top:-30px; margin-bottom:20px; }
-
-/* スコアカード */
+/* score list (cards) */
 #tenhan-list { width:90%; margin-left:5vw; display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
 .score-card {
   display:flex;
@@ -146,14 +144,22 @@ h1,h2,h3 { font-size: 4vw; font-weight: bold; line-height:1.2; color:#333; }
 }
 .card-left { display:flex; gap:8px; align-items:center; justify-content:flex-start; }
 
-/* small notes */
-.setumei p1 { font-size:3vw; display:flex; text-align:left; margin-left:5vw; margin-bottom:30px; margin-top:-30px; }
+/* chart wrapper ensures sizes are constrained */
+.chart-wrap { width:100%; display:flex; justify-content:center; margin-bottom:20px; }
+#bar-chart { width: 100%; max-width: 90vw; height: 35vh !important; }
+#pie-chart { display:block; width: 85vw; max-width: calc(90vw - 5vw); height: 35vh !important; }
 
-/* responsive tweaks */
+/* setumei */
+.setumei p1 { font-size:3vw; display:flex; text-align:left; margin-left:5vw; margin-bottom:30px; }
+
+/* responsive adjustments for larger screens */
 @media (min-width:600px) {
-  h1,h2,h3 { font-size: 1.6rem; }
-  #name-input { font-size:1rem; min-width:220px; }
+  #name-input { font-size:1rem; min-width:240px; }
   #date-select { font-size:0.95rem; }
   #search-button { font-size:0.95rem; }
-  #loading-text { font-size:1rem; color:red; }
+  #loading-text { font-size:1rem; }
+  .table { grid-auto-rows: 4rem; }
+  .header { font-size:1rem; }
+  .data { font-size:0.95rem; }
+  #bar-chart, #pie-chart { height: 320px !important; }
 }
