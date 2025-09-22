@@ -1,59 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>まぁじゃん成績</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>日別成績 - ノーレート</title>
+<link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <!-- 更新状況 -->
-  <div id="update-status-container">
-    <p id="update-status"></p>
-  </div>
+  <main class="wrap">
+    <!-- 更新状況（そのまま表示） -->
+    <section class="update">
+      <div class="striped-title">更新状況</div>
+      <div id="updateStatus" class="update-text">—</div>
+    </section>
 
-  <!-- 名前入力・日付選択 -->
-  <div id="search-area">
-    <input type="text" id="name-input" placeholder="名前を入力してねっ" />
-    <button id="prev-day">◀️</button>
-    <input type="date" id="date-input" />
-    <button id="next-day">▶️</button>
-  </div>
+    <!-- 検索：名前 + 日付ナビ -->
+    <section class="search">
+      <input id="nameInput" type="text" placeholder="名前を入力してねっ" aria-label="名前入力" />
+      <div class="date-nav">
+        <button id="prevBtn" class="nav">◀️</button>
+        <div id="dateDisplay" class="date-display">--</div>
+        <button id="nextBtn" class="nav">▶️</button>
+      </div>
+      <input id="datePicker" type="date" class="date-picker" aria-label="日付選択"/>
+    </section>
 
-  <!-- ローディング -->
-  <div id="loading-container">
-    <div id="loading-bar"></div>
-    <p id="loading-text">ロード…チュ♡</p>
-  </div>
+    <!-- ローディング（表示はJS制御） -->
+    <section id="loadingArea" class="loading-area hidden" aria-live="polite">
+      <div class="loading-bar-outer">
+        <div id="loadingBar" class="loading-bar-inner"></div>
+      </div>
+      <div class="loading-text">ロード…チュ♡</div>
+    </section>
 
-  <!-- 集計人数・総ゲーム数 -->
-  <div id="summary-info">
-    <p id="visitor-count">集計人数: _人</p>
-    <p id="total-games">総ゲーム数: _半荘</p>
-  </div>
+    <!-- 結果 -->
+    <section id="results" class="results hidden">
+      <div class="top-row">
+        <div class="summary">
+          <div class="striped-title">集計情報</div>
+          <div class="row"><strong>集計人数</strong> <span id="participantCount">_人</span></div>
+          <div class="row"><strong>総ゲーム数</strong> <span id="totalGames">_半荘</span></div>
+        </div>
+        <div class="member">
+          <div class="striped-title">プレイヤー</div>
+          <div class="row">No. <span id="playerNo">0000</span>　<span id="playerName">---</span></div>
+        </div>
+      </div>
 
-  <!-- メンバー情報 -->
-  <div id="member-info"></div>
+      <!-- 日別ランキング -->
+      <section class="section">
+        <div class="striped-title">日別ランキング</div>
+        <div id="rankingTable" class="two-row-table"></div>
+      </section>
 
-  <!-- 日別ランキング -->
-  <div class="section-title">/日別ランキング/</div>
-  <div id="ranking-table" class="table"></div>
+      <!-- 日別スコアデータ -->
+      <section class="section">
+        <div class="striped-title">日別スコアデータ</div>
+        <div id="scoreTable" class="two-row-table"></div>
+      </section>
 
-  <!-- 日別スコアデータ -->
-  <div class="section-title">/日別スコアデータ/</div>
-  <div id="scoredata-table" class="table"></div>
+      <!-- この日のゲーム（グラフ + リスト） -->
+      <section class="section">
+        <div class="striped-title">この日のゲーム</div>
+        <div class="chart-wrap"><canvas id="barChart" height="120"></canvas></div>
+        <div id="gamesList" class="games-list"></div>
+      </section>
 
-  <!-- この日のゲーム -->
-  <div class="section-title">/この日のゲーム/</div>
-  <canvas id="bar-chart"></canvas>
-  <div id="games-list"></div>
+      <!-- 着順 -->
+      <section class="section">
+        <div class="striped-title">着順データ</div>
+        <div id="placementTable" class="placement-table"></div>
+        <div class="chart-wrap"><canvas id="pieChart" height="120"></canvas></div>
+      </section>
+    </section>
 
-  <!-- 着順データ -->
-  <div class="section-title">/着順データ/</div>
-  <div id="rank-count-table" class="table"></div>
-  <canvas id="pie-chart"></canvas>
+    <div id="statusMessage" class="status-msg" role="status" aria-live="polite"></div>
+  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
