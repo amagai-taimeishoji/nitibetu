@@ -1,69 +1,59 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>成績表示</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>まぁじゃん成績</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="header">
-    <h1>成績表示</h1>
-    <p id="updateStatus"></p>
+  <!-- 更新状況 -->
+  <div id="update-status-container">
+    <p id="update-status"></p>
   </div>
 
-  <!-- 検索欄 -->
-  <div class="search-area">
-    <input type="text" id="nameInput" placeholder="名前を入力">
-    <button id="prevBtn">◀️</button>
-    <input type="date" id="dateInput">
-    <button id="nextBtn">▶️</button>
-    <button id="searchBtn">検索</button>
+  <!-- 名前入力・日付選択 -->
+  <div id="search-area">
+    <input type="text" id="name-input" placeholder="名前を入力してねっ" />
+    <button id="prev-day">◀️</button>
+    <input type="date" id="date-input" />
+    <button id="next-day">▶️</button>
   </div>
 
   <!-- ローディング -->
-  <div id="loading" class="loading-container">
-    <div class="loading-bar"></div>
-    <p>ロード中…チュ♡</p>
+  <div id="loading-container">
+    <div id="loading-bar"></div>
+    <p id="loading-text">ロード…チュ♡</p>
   </div>
 
-  <!-- 結果表示 -->
-  <div id="resultArea" style="display:none;">
-    <!-- 集計人数・総ゲーム数 -->
-    <div class="section">
-      <div class="striped-title">集計情報</div>
-      <p>集計人数: <span id="totalPlayers">0</span> 人</p>
-      <p>総ゲーム数: <span id="totalGames">0</span> 半荘</p>
-    </div>
-
-    <!-- 日別ランキング -->
-    <div class="section">
-      <div class="striped-title">日別ランキング</div>
-      <table id="dailyRankingTable"></table>
-    </div>
-
-    <!-- 日別スコアデータ -->
-    <div class="section">
-      <div class="striped-title">日別スコアデータ</div>
-      <table id="dailyScoreTable"></table>
-    </div>
-
-    <!-- この日のゲーム -->
-    <div class="section">
-      <div class="striped-title">この日のゲーム</div>
-      <canvas id="scoreChart"></canvas>
-      <ul id="gameList"></ul>
-    </div>
-
-    <!-- 着順データ -->
-    <div class="section">
-      <div class="striped-title">着順データ</div>
-      <table id="rankCountTable"></table>
-      <canvas id="rankPie"></canvas>
-    </div>
+  <!-- 集計人数・総ゲーム数 -->
+  <div id="summary-info">
+    <p id="visitor-count">集計人数: _人</p>
+    <p id="total-games">総ゲーム数: _半荘</p>
   </div>
+
+  <!-- メンバー情報 -->
+  <div id="member-info"></div>
+
+  <!-- 日別ランキング -->
+  <div class="section-title">/日別ランキング/</div>
+  <div id="ranking-table" class="table"></div>
+
+  <!-- 日別スコアデータ -->
+  <div class="section-title">/日別スコアデータ/</div>
+  <div id="scoredata-table" class="table"></div>
+
+  <!-- この日のゲーム -->
+  <div class="section-title">/この日のゲーム/</div>
+  <canvas id="bar-chart"></canvas>
+  <div id="games-list"></div>
+
+  <!-- 着順データ -->
+  <div class="section-title">/着順データ/</div>
+  <div id="rank-count-table" class="table"></div>
+  <canvas id="pie-chart"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
