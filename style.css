@@ -28,11 +28,13 @@ body{font-family:"Noto Sans JP",system-ui,-apple-system,Arial; margin:0; backgro
 /* search */
 .search{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center;margin-bottom:8px}
 #nameInput{padding:8px 12px;border-radius:8px;border:1px solid #ddd;width:48%;min-width:180px;font-size:1rem}
+#searchBtn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:linear-gradient(45deg,#4caf50,#81c784);color:#fff;cursor:pointer}
+
 .date-nav{display:flex;align-items:center;gap:8px}
 .nav{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
 .nav[disabled]{opacity:.4;cursor:default}
 .date-display{min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid #eee;background:#fafafa;font-weight:700}
-.date-picker{padding:8px;border-radius:8px;border:1px solid #ddd}
+.date-picker{padding:8px;border-radius:8px;border:1px solid #ddd; font-weight:700;}
 
 /* loading */
 .loading-area{display:flex;flex-direction:column;align-items:center;gap:6px;margin:10px 0}
