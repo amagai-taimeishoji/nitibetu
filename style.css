@@ -1,73 +1,80 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>麻雀 日別成績ビューア（月固定）</title>
+/* ---------- ベース ---------- */
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  margin: 0 auto;
+  padding: 12px 0;
+  background-color: #FFFFFF;
+  color: #333;
+  text-align: center;
+}
 
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-  <main>
-    <!-- 更新状況 -->
-    <div id="top-row">
-      <div id="update-wrapper">
-        <div id="update-label">更新状況</div>
-        <div id="update-status">ーーーーーー</div>
-      </div>
+/* 更新状況 */
+#update-row { margin-bottom: 8px; }
+#update-label { font-size: 3.2vw; color:#666; }
+#update-status { font-size: 3.6vw; font-weight:600; margin-top:4px; }
 
-      <!-- 検索エリア -->
-      <div id="controls">
-        <input id="name-input" type="text" placeholder="名前をいれてねっ" autocomplete="off" />
-        <button id="search-button">検索</button>
+/* 名前行 */
+#name-row { display:flex; gap:8px; justify-content:center; align-items:center; margin:6px 0; }
+#name-input {
+  padding:8px; font-size:3.6vw; border:1px solid #ccc; border-radius:6px;
+  min-width:36vw; max-width:46vw;
+}
+#search-button {
+  background: linear-gradient(45deg,#4caf50,#81c784);
+  color:#fff; border:none; border-radius:8px; padding:8px 12px; font-size:3.6vw; cursor:pointer;
+}
 
-        <div id="date-control">
-          <button id="prev-day" class="nav-btn" title="前日">◀️</button>
-          <select id="date-select" aria-label="日付プルダウン"></select>
-          <button id="next-day" class="nav-btn" title="翌日">▶️</button>
-        </div>
-      </div>
-    </div>
+/* 日付行 */
+#date-row { display:flex; gap:8px; justify-content:center; align-items:center; margin-bottom:10px; }
+.nav-btn { font-size:3.2vw; padding:6px 8px; border-radius:6px; border:none; background:#f2f2f2; cursor:pointer; }
+.nav-btn[hidden]{ display:none; }
+#date-select { padding:6px 10px; font-size:3.2vw; border-radius:6px; border:1px solid #ccc; }
 
-    <!-- ローディングバー（インプットは常に見える） -->
-    <div id="loading-area" aria-hidden="true">
-      <div id="loading-bar"><div id="loading-fill"></div></div>
-      <div id="loading-text">ロード、チュ…♡</div>
-    </div>
+/* Loading area */
+#loading-area {
+  width:90%; max-width:90vw; margin:10px auto; display:none; align-items:center; justify-content:center; gap:12px;
+}
+#loading-bar { width:60%; height:12px; background:#f2f2f2; border-radius:8px; overflow:hidden; border:1px solid #ddd; }
+#loading-fill { width:0%; height:100%; background: linear-gradient(90deg,#ff8b8b,#ff3b3b); }
+#loading-text { color:red; font-size:3.2vw; font-weight:bold; }
 
-    <!-- 結果 -->
-    <section id="results" style="display:none;">
-      <div id="info-container">
-        <div id="period-visitor">
-          <div id="visitor-count"></div>
-        </div>
-        <div id="member-info"></div>
-      </div>
+/* results & small layout */
+#results { margin-top:12px; text-align:center; }
+#info-container { width:90%; margin:0 auto 10px; text-align:left; }
+#visitor-count { font-size:4vw; margin-left:5vw; }
+#member-info { font-size:4.8vw; margin-left:5vw; margin-top:6px; }
 
-      <div class="box15"><h3>ランキング</h3></div>
-      <div id="ranking-table" class="table"></div>
-      <div class="setumei"><p1>※当日参加者のみで計算</p1></div>
+/* section stripy boxes (ref) */
+.box15,.box16,.box17,.box18 {
+  padding:0.5em 1em; max-width:82vw; width:82vw; height:3vh; display:flex; justify-content:center; align-items:center;
+  background: repeating-linear-gradient(-45deg,#f0f8ff,#f0f8ff 3px,#e9f4ff 3px,#e9f4ff 7px); margin: 12px auto;
+}
 
-      <div class="box16"><h3>日別成績</h3></div>
-      <div id="scoredata-table" class="table"></div>
+/* tables (grid) */
+.table { display:grid; width:90%; grid-auto-rows:9vw; border-radius:4px; overflow:hidden; margin-left:5vw; margin-bottom:25px; }
+.table div { border:0.5px solid #555; display:flex; align-items:center; justify-content:center; padding:6px; box-sizing:border-box; }
+.header { font-weight:bold; background-color:#d0ebff; font-size:2.5vw; text-align:center; }
+.data { background-color:white; font-size:3vw; justify-content:flex-end; text-align:right; padding-right:6px; }
 
-      <div class="box17"><h3>スコアデータ</h3></div>
-      <div id="tenhan-container">
-        <div id="tenhan-list"></div>
-        <div class="chart-wrap">
-          <canvas id="bar-chart"></canvas>
-        </div>
-      </div>
+/* score cards */
+#tenhan-list { width:90%; margin-left:5vw; display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+.score-card { display:flex; align-items:center; justify-content:space-between; padding:8px; border-radius:8px; border:1px solid:#ddd; background:#fff; font-size:3.2vw; }
+.card-left { display:flex; gap:8px; align-items:center; }
 
-      <div class="box18"><h3>着順データ</h3></div>
-      <div id="rank-count-table" class="table"></div>
-      <div class="chart-wrap">
-        <canvas id="pie-chart"></canvas>
-      </div>
-    </section>
-  </main>
+/* chart wrappers: fixed sizes by CSS */
+.chart-wrap { width:100%; display:flex; justify-content:center; margin-bottom:20px; }
+#bar-chart { width:100%; max-width:90vw; height:35vh !important; } /* 固定サイズ */
+#pie-chart { display:block; width:85vw; max-width:calc(90vw - 5vw); height:35vh !important; }
 
-  <script src="app.js" defer></script>
-</body>
-</html>
+/* hide empty */
+.empty-cell { display:none; }
+
+/* responsive */
+@media (min-width:600px){
+  #name-input { font-size:1rem; min-width:240px; }
+  #date-select { font-size:0.95rem; }
+  #search-button { font-size:0.95rem; }
+  #loading-text { font-size:1rem; }
+  .header { font-size:1rem; }
+  .data { font-size:0.95rem; }
+}
