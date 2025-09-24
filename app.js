@@ -1,5 +1,7 @@
 // ---------------- Config (必ず変更する) ----------------
 const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; //その月の exec URLに置き換え
+// ---------------- Config (必ず変更する) ----------------
+const API_URL = "https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec"; // ← あなたのGAS exec URLに置き換え
 const YEAR = 2025;
 const MONTH = 10;
 const DAY_MIN = 1;
@@ -274,114 +276,27 @@ function renderGameList(games){
 }
 
 /* bar chart (center 0), CSS fixes the size; Chart.js animation disabled */
-function createBarChart(games) {
-  // games: [{time: "HH:mm:ss", score: Number, rank: ...}, ...] を期待（既存コードのまま）
+function createBarChart(games){
   if (barChartInstance) barChartInstance.destroy();
   const ctx = barCanvas.getContext("2d");
-
-  // 値配列（左＝古い、右＝最新）
-  const values = (games || []).map(g => {
-    const v = Number(g && g.score);
-    return isFinite(v) ? v : 0;
-  });
-
-  // ラベルは時刻（空なら空文字）
-  const labels = (games || []).map(g => g && g.time ? g.time : "");
-
-  if (values.length === 0) {
-    // 描画領域クリア（データ無し）
-    ctx.clearRect(0, 0, barCanvas.width, barCanvas.height);
-    return;
-  }
-
-  // canvas 実際の表示幅を使ってラベル数の上限を決める（1ラベルあたりの幅目安）
-  const canvasWidth = barCanvas.clientWidth || barCanvas.parentElement.clientWidth || 600;
-  const approxPxPerLabel = 48; // 調整可：この数値が小さいとラベル多め表示
-  const maxTicks = Math.max(3, Math.floor(canvasWidth / approxPxPerLabel));
-  // step: 何個おきにラベルを出すか
-  const step = Math.max(1, Math.ceil(values.length / maxTicks));
-
-  // 右端（最新）を黄色で強調。その他は正=緑、負=赤
-  const backgroundColors = values.map((v, i) => {
-    if (i === values.length - 1) return "rgba(255,206,86,0.95)"; // 最新＝黄色
-    return v >= 0 ? "rgba(76,175,80,0.9)" : "rgba(244,67,54,0.9)";
-  });
-  const borderColors = values.map((v, i) => {
-    if (i === values.length - 1) return "rgba(200,160,50,1)";
-    return v >= 0 ? "rgba(56,142,60,1)" : "rgba(211,47,47,1)";
-  });
-
-  // 縦軸は最大絶対値に合わせて±表示
-  const rawMax = Math.max(...values);
-  const rawMin = Math.min(...values);
-  const baseMaxAbs = Math.max(Math.abs(rawMax), Math.abs(rawMin));
-  const SAFE_MIN = 10; // 全て0のときの最小レンジ（必要なら小さくする）
-  const maxAbs = Math.max(baseMaxAbs, SAFE_MIN) * 1.10; // 余裕10%
-
-  // 棒の最大幅：表示幅と棒数から自動算出（極端に多いと小さく）
-  const calcMaxBarThickness = Math.max(6, Math.min(60, Math.floor(canvasWidth / Math.max(3, values.length) * 0.8)));
+  const labels = games.map(g => g.time || "");
+  const values = games.map(g => Number(g.score || 0));
+  if (values.length === 0) { ctx.clearRect(0,0,barCanvas.width,barCanvas.height); return; }
+  const maxAbs = Math.max(10, Math.max(...values.map(v => Math.abs(v)))) * 1.2;
+  const bg = values.map(v => v >= 0 ? "rgba(76,175,80,0.9)" : "rgba(244,67,54,0.9)");
 
   barChartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "スコア",
-        data: values,
-        backgroundColor: backgroundColors,
-        borderColor: borderColors,
-        borderWidth: 1,
-        maxBarThickness: calcMaxBarThickness,
-        // categoryPercentage / barPercentage で見た目調整
-        categoryPercentage: 0.8,
-        barPercentage: 0.9
-      }]
-    },
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
     options: {
-      responsive: true,
-      maintainAspectRatio: false, // CSS側で高さ固定
-      animation: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) {
-              const v = ctx.raw;
-              // 小数１桁で表示（整数なら小数なし）
-              const isInt = Math.abs(v - Math.round(v)) < 1e-9;
-              return ` ${isInt ? String(Math.round(v)) : v.toFixed(1)}pt`;
-            }
-          }
-        }
-      },
-      layout: { padding: { top: 8, bottom: 8 } },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: {
-            autoSkip: false,
-            callback: function(value, index) {
-              // index を使って間引き（step個おきに表示）
-              return (index % step === 0) ? this.getLabelForValue(value) : "";
-            },
-            maxRotation: 45,
-            minRotation: 0
-          }
-        },
-        y: {
-          min: -maxAbs,
-          max: maxAbs,
-          ticks: {
-            // ステップは適当に割る（5分割を目安）
-            stepSize: Math.ceil(maxAbs / 5)
-          },
-          grid: { drawBorder: false }
-        }
-      }
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ min:-maxAbs, max:maxAbs, ticks:{ stepSize: Math.ceil(maxAbs/5) } } }
     }
   });
 }
-
 
 /* rank counts */
 function countRanks(games){
@@ -402,56 +317,12 @@ function createRankCountTable(counts){
     if (!cell||cell.toString().trim()==="") d.classList.add("empty-cell"); table.appendChild(d);
   }));
 }
-function createPieChart(counts) {
-  // counts: { "1":n, "1.5":n, ... } または ['1','1.5',...]でも動くように受ける
+function createPieChart(counts){
   if (pieChartInstance) pieChartInstance.destroy();
   const ctx = pieCanvas.getContext("2d");
-
-  // counts が数値（回数）で来ている想定なので、そのまま割合を出す
-  const keys = ["1","1.5","2","2.5","3","3.5","4"];
-  const dataArr = keys.map(k => Number(counts[k] || 0));
-  const total = dataArr.reduce((a,b) => a + b, 0);
-  if (total === 0) {
-    // データなし
-    ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height);
-    return;
-  }
-  // 円グラフは回数 -> 割合(%) 表示
-  const percents = dataArr.map(v => (v / total * 100));
-
-  const labels = ["1着","1.5着","2着","2.5着","3着","3.5着","4着"];
-  const colors = [
-    "rgba(240,122,122,1)",
-    "rgba(160,160,160,1)",
-    "rgba(240,217,109,1)",
-    "rgba(190,190,190,1)",
-    "rgba(109,194,122,1)",
-    "rgba(140,140,140,1)",
-    "rgba(109,158,217,1)"
-  ];
-
-  pieChartInstance = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: labels,
-      datasets: [{ data: percents, backgroundColor: colors }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false, // CSSで高さ固定
-      animation: false,
-      plugins: {
-        legend: { position: "left", labels: { boxWidth: 12 } },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) {
-              const v = ctx.raw;
-              const label = ctx.label || "";
-              return `${label}: ${v.toFixed(1)}%`;
-            }
-          }
-        }
-      }
-    }
-  });
+  const dataArr = ["1","1.5","2","2.5","3","3.5","4"].map(k=>counts[k]||0);
+  const total = dataArr.reduce((a,b)=>a+b,0);
+  if (total===0){ ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height); return; }
+  const colors = ["rgba(240,122,122,1)","rgba(160,160,160,1)","rgba(240,217,109,1)","rgba(190,190,190,1)","rgba(109,194,122,1)","rgba(140,140,140,1)","rgba(109,158,217,1)"];
+  pieChartInstance = new Chart(ctx, { type:'pie', data:{ labels:["1着","1.5着","2着","2.5着","3着","3.5着","4着"], datasets:[{ data:dataArr, backgroundColor: colors }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{position:'left'}} } });
 }
