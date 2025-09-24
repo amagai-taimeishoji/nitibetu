@@ -30,14 +30,14 @@ body {
             color:#fff; 
             border:none; 
             border-radius:8px; 
-            padding: 8px 10px; 
+            padding: 10px 12px; 
             font-size:3.6vw; 
             cursor:pointer;
             }
             
             
 .nav-btn[hidden]{ display:none; }
-#date-select { padding:8px 10px; font-size:4vw; border-radius:6px; border:1px solid #ccc; }
+#date-select { padding:10px 14px; font-size:5vw; border-radius:6px; border:1px solid #fff; }
 
 /* Loading area */
 #loading-area {
