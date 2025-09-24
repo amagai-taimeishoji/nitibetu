@@ -284,14 +284,27 @@ function createBarChart(games){
   const bg = values.map(v => v >= 0 ? "rgba(76,175,80,0.9)" : "rgba(244,67,54,0.9)");
 
   barChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "スコア",
+        data: reorderedScores.map(s => s || 0),
+        backgroundColor: colors
+      }]
+    },
     options: {
-      responsive:true,
-      maintainAspectRatio:false,
-      animation:false,
-      plugins:{ legend:{ display:false } },
-      scales:{ y:{ min:-maxAbs, max:maxAbs, ticks:{ stepSize: Math.ceil(maxAbs/5) } } }
+      responsive: true,
+      maintainAspectRatio: true,
+      layout: { padding: { top: 20, bottom: 20 } },
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          min: -maxAbs,
+          max: maxAbs,
+          ticks: { stepSize: Math.ceil(maxAbs / 5) }
+        }
+      }
     }
   });
 }
