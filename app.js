@@ -53,6 +53,7 @@ function populateDateDropdown(year, month) {
   }
 }
 
+
 function setInitialDate(){
   const nowStr = new Date().toLocaleString("en-US",{ timeZone: "Asia/Tokyo" });
   const nowJst = new Date(nowStr);
@@ -61,6 +62,12 @@ function setInitialDate(){
   if (base.getFullYear() !== YEAR || base.getMonth()+1 !== MONTH) base = new Date(YEAR, MONTH-1, DAY_MIN);
   dateSelect.value = `${YEAR}/${String(MONTH).padStart(2,"0")}/${String(base.getDate()).padStart(2,"0")}`;
   updateNavButtons();
+}
+
+function formatTimeHHMM(timeStr){
+  if (!timeStr) return "-";
+  const [h, m] = timeStr.split(":");
+  return `${h.padStart(2,"0")}:${m.padStart(2,"0")}`;
 }
 
 function attachEvents(){
@@ -282,12 +289,20 @@ function renderGameList(games){
   games.forEach((g,i)=>{
     const card = document.createElement("div");
     card.className = "score-card";
+
     const left = document.createElement("div");
     left.className = "card-left";
-    left.innerHTML = `<strong>${i+1}.</strong> <span style="min-width:60px;display:inline-block">${g.time || "-"}</span>`;
+    left.innerHTML = `
+      <div class="card-time">${formatTimeHHMM(g.time)}</div>
+      <div class="card-rank">${g.rank!=null ? g.rank + "着":"着順なし"}</div>
+    `;
+
     const right = document.createElement("div");
-    const scoreStr = (g.score==null || isNaN(g.score)) ? "データ不足" : `${Number(g.score).toFixed(Math.abs(g.score - Math.round(g.score))<1e-6 ? 0 : 1)}pt`;
-    right.innerHTML = `<span>${scoreStr}</span>&nbsp;&nbsp;<span>${g.rank!=null ? g.rank + "着":"着順なし"}</span>`;
+    right.className = "card-score";
+    const scoreStr = (g.score==null || isNaN(g.score)) ? "データ不足" : 
+      `${Number(g.score).toFixed(Math.abs(g.score - Math.round(g.score))<1e-6 ? 0 : 1)}pt`;
+    right.textContent = scoreStr;
+
     card.appendChild(left);
     card.appendChild(right);
     tenhanList.appendChild(card);
@@ -298,7 +313,7 @@ function renderGameList(games){
 function createBarChart(games){
   if (barChartInstance) barChartInstance.destroy();
   const ctx = barCanvas.getContext("2d");
-  const labels = games.map(g => g.time || "");
+  const labels = games.map(g => formatTimeHHMM(g.time));
   const values = games.map(g => Number(g.score || 0));
   const maxVal = values.length ? Math.max(...values) : 0;
   const minVal = values.length ? Math.min(...values) : 0;
