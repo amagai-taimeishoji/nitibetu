@@ -285,14 +285,7 @@ function createBarChart(games){
 
   barChartInstance = new Chart(ctx, {
     type: "bar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "スコア",
-        data: reorderedScores.map(s => s || 0),
-        backgroundColor: colors
-      }]
-    },
+    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
     options: {
       responsive: true,
       maintainAspectRatio: true,
