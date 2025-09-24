@@ -274,49 +274,62 @@ function renderGameList(games){
 }
 
 /* bar chart (center 0), CSS fixes the size; Chart.js animation disabled */
-function createBarChart(scores) {
-  const ctx = document.getElementById("bar-chart").getContext("2d");
+function createBarChart(games) {
   if (barChartInstance) barChartInstance.destroy();
+  const ctx = barCanvas.getContext("2d");
 
-  // ラベルを動的に生成
-  const labels = scores.map((_, idx) =>
-    idx === scores.length - 1 ? "最新" : `${scores.length - idx}`
+  const values = (games || []).map(g => Number(g?.score) || 0);
+  const labels = (games || []).map(g => g?.time || "");
+
+  const isEmpty = values.length === 0;
+  const safeValues = isEmpty ? [0] : values;
+  const safeLabels = isEmpty ? ["データなし"] : labels;
+
+  const latestIndex = safeValues.length - 1;
+  const backgroundColors = safeValues.map((_, i) =>
+    i === latestIndex
+      ? "rgba(255, 206, 86, 0.95)" // 最新だけ黄色
+      : "rgba(186, 140, 255, 0.7)" // それ以外は紫
+  );
+  const borderColors = safeValues.map((_, i) =>
+    i === latestIndex
+      ? "rgba(200,160,50,1)" // 黄色の枠
+      : "rgba(150,110,220,1)" // 紫の枠
   );
 
-  const colors = labels.map((label, idx) =>
-    idx === labels.length - 1
-      ? "rgba(255, 206, 86, 0.9)" // 最新だけ黄色
-      : "rgba(186, 140, 255, 0.7)"
-  );
-
-  const values = scores.map(s => (s == null || isNaN(s) ? 0 : Number(s)));
-  const maxVal = Math.max(...values);
-  const minVal = Math.min(...values);
-  const maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal)) * 1.1;
+  const rawMax = Math.max(...safeValues);
+  const rawMin = Math.min(...safeValues);
+  const baseMaxAbs = Math.max(Math.abs(rawMax), Math.abs(rawMin));
+  const SAFE_MIN = 10;
+  const maxAbs = Math.max(baseMaxAbs, SAFE_MIN) * 1.10;
 
   barChartInstance = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: labels,
+      labels: safeLabels,
       datasets: [{
         label: "スコア",
-        data: values,
-        backgroundColor: colors
+        data: safeValues,
+        backgroundColor: backgroundColors,
+        borderColor: borderColors,
+        borderWidth: 1,
+        maxBarThickness: 40
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      layout: { padding: { top: 20, bottom: 20 } },
-      scales: {
-        x: {
-          ticks: {
-            autoSkip: false, // 全ラベル表示
-            maxRotation: 0,
-            minRotation: 0
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.raw}pt`
           }
-        },
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
         y: {
           min: -maxAbs,
           max: maxAbs,
