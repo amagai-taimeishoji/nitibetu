@@ -63,6 +63,8 @@ body {
 
 
 /* グラフ */
+.chart-wrap { width:100%; display:flex; justify-content:center; margin-bottom:20px; }
+
 #bar-chart {
   width: 100%;
   max-width: 90vw;
