@@ -157,13 +157,13 @@ function updateNavButtons() {
 
 /* ================= Loading アニメーション制御（15s 非ループ） =================
    - startLoading() で表示、loadingTick が RAF で進める
-   - 100% 到達時に自動的に stopLoading() を呼びます（要望対応）
+   - 100% 到達時に自動的に stopLoading() を呼びます
    ======================================================================== */
 function startLoading() {
   loadingArea.style.display = "flex";
   loadingFill.style.width = "0%";
   loadingText.style.display = "block";
-  updateStatusEl.textContent = "読み込みチュ…♡";
+  updateStatusEl.textContent = "";
 
   loadingStart = performance.now();
   cancelAnimationFrame(loadingRaf);
