@@ -28,7 +28,7 @@ body {
   font-size:1rem;
   border:1px solid #ccc;
   border-radius:6px;
-  min-width:8rem; max-width:10rem;
+  min-width:10rem; max-width:12rem;
 }
 #search-button {
   background: linear-gradient(45deg,#4caf50,#81c784);
