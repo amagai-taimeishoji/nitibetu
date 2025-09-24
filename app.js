@@ -3,7 +3,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr
 const YEAR = 2025;
 const MONTH = 10;
 const DAY_MIN = 1;
-const DAY_MAX = 30;
+const DAY_MAX = 40;
 const LOADING_DURATION_MS = 20000; // 15秒でMAX
 // -------------------------------------------------------
 
