@@ -281,8 +281,9 @@ function createBarChart(games){
   const values = games.map(g => Number(g.score || 0));
   const maxVal = values.length ? Math.max(...values) : 0;
   const minVal = values.length ? Math.min(...values) : 0;
-  const maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal)) * 1.1;
-　const bg = values.map((_, i) =>
+  const baseAbs = Math.max(Math.abs(maxVal), Math.abs(minVal));
+  const maxAbs = Math.max(baseAbs, 10) * 1.1;
+  const bg = values.map((_, i) =>
   i === values.length - 1
     ? "rgba(255, 206, 86, 0.95)"  // 最新: 黄色
     : "rgba(186, 140, 255, 0.7)"  // それ以外: 紫
@@ -293,7 +294,7 @@ function createBarChart(games){
     data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       layout: { padding: { top: 20, bottom: 20 } },
       plugins: { legend: { display: false } },
       scales: {
