@@ -42,7 +42,7 @@ body {
   display:flex; gap:0.5rem;
   justify-content: right; align-items:center;
   margin-bottom:0.5rem;
-  margin-right:25vw;
+  margin-right:22vw;
 }
 .nav-btn {
   background: linear-gradient(45deg,#4caf50,#81c784);
