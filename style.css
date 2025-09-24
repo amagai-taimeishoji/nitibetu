@@ -56,10 +56,42 @@ body {
 .header { font-weight:bold; background-color:#d0ebff; font-size:2.5vw; text-align:center; }
 .data { background-color:white; font-size:3vw; justify-content:flex-end; text-align:right; padding-right:6px; }
 
-/* score cards */
-#tenhan-list { width:90%; margin-left:5vw; display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
-.score-card { display:flex; align-items:center; justify-content:space-between; padding:8px; border-radius:8px; border:1px solid:#ddd; background:#fff; font-size:3.2vw; }
-.card-left { display:flex; gap:8px; align-items:center; }
+.score-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  margin: 8px auto;
+  width: 90%;
+  border-radius: 10px;
+  background: #f9f9ff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  font-size: 3.2vw;
+}
+
+.card-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.card-time {
+  font-weight: bold;
+  font-size: 3.4vw;
+  color: #333;
+  min-width: 60px;
+}
+
+.card-rank {
+  font-size: 3.2vw;
+  color: #666;
+}
+
+.card-score {
+  font-size: 3.6vw;
+  font-weight: 600;
+  color: #2a5adf;
+}
 
 
 /* グラフ */
