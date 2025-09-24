@@ -42,6 +42,7 @@ body {
   display:flex; gap:0.5rem;
   justify-content: right; align-items:center;
   margin-bottom:0.5rem;
+  margin-top:1rem;
   margin-right:22vw;
 }
 .nav-btn {
