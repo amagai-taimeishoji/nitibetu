@@ -62,10 +62,30 @@ body {
 .card-left { display:flex; gap:8px; align-items:center; }
 
 /* chart wrappers: fixed sizes by CSS */
-.chart-wrap { width:100%; display:flex; justify-content:center; margin-bottom:20px; }
-#bar-chart { width:100%; max-width:90vw; height:35vh !important; } /* 固定サイズ */
-#pie-chart { display:block; width:85vw; max-width:calc(90vw - 5vw); height:35vh !important; }
+/* グラフ */
+#bar-chart {
+  width: 100%;
+  max-width: 90vw;
+  margin-bottom: 15px !important;
+  margin-top: -35px !important;
+}
 
+#pie-chart {
+  display: block;
+  width: 85vw;
+  max-width: calc(90vw - 5vw);
+  margin-left: 10vw !important;
+  margin-right: auto;
+  margin-top: -60px !important;
+  margin-bottom: 20px;
+}
+
+#bar-chart,
+#pie-chart {
+  display: block;
+  margin-left: 5vw;
+  margin-right: auto;
+}
 /* hide empty */
 .empty-cell { display:none; }
 
