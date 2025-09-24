@@ -330,8 +330,7 @@ function createRankCountTable(counts){
 function createPieChart(counts){
   if (pieChartInstance) pieChartInstance.destroy();
   const ctx = pieCanvas.getContext("2d");
-  const keys = ["1","1.5","2","2.5","3","3.5","4"];
-  const dataArr = keys.map(k => counts[k] || 0);
+  const dataArr = ["1","1.5","2","2.5","3","3.5","4"].map(k=>counts[k]||0);
   const total = dataArr.reduce((a,b)=>a+b,0);
 
   if (total===0){
