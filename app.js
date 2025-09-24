@@ -163,7 +163,7 @@ function startLoading() {
   loadingArea.style.display = "flex";
   loadingFill.style.width = "0%";
   loadingText.style.display = "block";
-  updateStatusEl.textContent = "";
+  updateStatusEl.textContent = "────────";
 
   loadingStart = performance.now();
   cancelAnimationFrame(loadingRaf);
