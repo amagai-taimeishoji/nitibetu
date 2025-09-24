@@ -382,7 +382,8 @@ function createPieChart(data) {
         legend:{
           display:true,
           position:'left'
-        }
+         }
       }
     }
-  })
+  });
+}
