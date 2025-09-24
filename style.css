@@ -88,8 +88,8 @@ body {
 /* 結果エリア */
 #results { margin-top:1rem; text-align:center; }
 #info-container { width:90%; margin:0 auto 1rem; text-align:left; }
-#visitor-count { font-size:1rem; margin-left:1rem; }
-#member-info { font-size:1.1rem; margin-left:1rem; margin-top:0.3rem; }
+#visitor-count { font-size:1rem; margin-left:0.5rem; }
+#member-info { font-size:1.1rem; margin-left:0.5rem; margin-top:0.3rem; }
 
 /* 見出しボックス */
 .box15,.box16,.box17,.box18 {
