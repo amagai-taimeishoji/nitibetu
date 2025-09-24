@@ -405,47 +405,52 @@ function createRankCountTable(counts){
   }));
 }
 function createPieChart(counts) {
+  // counts: { "1":n, "1.5":n, ... } または ['1','1.5',...]でも動くように受ける
   if (pieChartInstance) pieChartInstance.destroy();
   const ctx = pieCanvas.getContext("2d");
 
+  // counts が数値（回数）で来ている想定なので、そのまま割合を出す
   const keys = ["1","1.5","2","2.5","3","3.5","4"];
-  const values = keys.map(k => Number(counts?.[k] || 0));
-  const total = values.reduce((a,b) => a+b, 0);
+  const dataArr = keys.map(k => Number(counts[k] || 0));
+  const total = dataArr.reduce((a,b) => a + b, 0);
+  if (total === 0) {
+    // データなし
+    ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height);
+    return;
+  }
+  // 円グラフは回数 -> 割合(%) 表示
+  const percents = dataArr.map(v => (v / total * 100));
 
-  // データが空なら 100%「データなし」
-  const isEmpty = total === 0;
-  const safeData = isEmpty ? [100] : values.map(v => v / total * 100);
-  const safeLabels = isEmpty ? ["データなし"] :
-    ["1着","1.5着","2着","2.5着","3着","3.5着","4着"];
-  const colors = isEmpty
-    ? ["rgba(200,200,200,0.8)"]
-    : [
-      "rgba(240,122,122,1)",
-      "rgba(160,160,160,1)",
-      "rgba(240,217,109,1)",
-      "rgba(190,190,190,1)",
-      "rgba(109,194,122,1)",
-      "rgba(140,140,140,1)",
-      "rgba(109,158,217,1)"
-    ];
+  const labels = ["1着","1.5着","2着","2.5着","3着","3.5着","4着"];
+  const colors = [
+    "rgba(240,122,122,1)",
+    "rgba(160,160,160,1)",
+    "rgba(240,217,109,1)",
+    "rgba(190,190,190,1)",
+    "rgba(109,194,122,1)",
+    "rgba(140,140,140,1)",
+    "rgba(109,158,217,1)"
+  ];
 
   pieChartInstance = new Chart(ctx, {
     type: "pie",
     data: {
-      labels: safeLabels,
-      datasets: [{ data: safeData, backgroundColor: colors }]
+      labels: labels,
+      datasets: [{ data: percents, backgroundColor: colors }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, // CSSで高さ固定
       animation: false,
       plugins: {
-        legend: { position: "left" },
+        legend: { position: "left", labels: { boxWidth: 12 } },
         tooltip: {
           callbacks: {
-            label: ctx => isEmpty
-              ? "データなし"
-              : `${ctx.label}: ${ctx.raw.toFixed(1)}%`
+            label: function(ctx) {
+              const v = ctx.raw;
+              const label = ctx.label || "";
+              return `${label}: ${v.toFixed(1)}%`;
+            }
           }
         }
       }
