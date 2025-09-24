@@ -282,6 +282,7 @@ function createBarChart(games){
   const maxVal = values.length ? Math.max(...values) : 0;
   const minVal = values.length ? Math.min(...values) : 0;
   const baseAbs = Math.max(Math.abs(maxVal), Math.abs(minVal));
+  const maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal)) * 1.1;
   const bg = values.map((_, i) =>
   i === values.length - 1
     ? "rgba(255, 206, 86, 0.95)"  // 最新: 黄色
