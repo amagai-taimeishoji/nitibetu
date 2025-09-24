@@ -48,7 +48,7 @@ body {
   background: linear-gradient(45deg,#4caf50,#81c784);
   color:#fff;
   border:none; border-radius:8px;
-  padding:0.6rem 0.75rem;
+  padding:0.5rem 0.75rem;
   font-size:1rem; cursor:pointer;
 }
 .nav-btn[hidden]{ display:none; }
