@@ -131,7 +131,7 @@ body {
 /* スコアカード */
 .score-card {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   background: #fff;
   border-radius: 8px;
@@ -151,6 +151,7 @@ body {
   color: #333;
 }
 .card-right {
+  margin-left:50vw;
   font-size: 1rem;
   color: #444;
   font-weight: 500;
