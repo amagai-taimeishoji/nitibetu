@@ -26,7 +26,16 @@ body {
 
 /* 日付行 */
 #date-row { display:flex; gap:8px; justify-content:center; align-items:center; margin-bottom:10px; }
-.nav-btn { font-size:3.2vw; padding:6px 8px; border-radius:6px; border:none; background:#f2f2f2; cursor:pointer; }
+.nav-btn { background: linear-gradient(45deg,#4caf50,#81c784);
+            color:#fff; 
+            border:none; 
+            border-radius:8px; 
+            padding:12px 12px; 
+            font-size:3.6vw; 
+            cursor:pointer;
+            }
+            
+            
 .nav-btn[hidden]{ display:none; }
 #date-select { padding:6px 10px; font-size:3.2vw; border-radius:6px; border:1px solid #ccc; }
 
