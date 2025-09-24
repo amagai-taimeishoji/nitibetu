@@ -20,8 +20,9 @@ body {
 /* 名前行 */
 #name-row {
   display:flex; gap:0.5rem;
-  justify-content:center; align-items:center;
+  justify-content: left; align-items:center;
   margin:0.5rem 0;
+  margin-left:10vw;
 }
 #name-input {
   padding:0.5rem;
