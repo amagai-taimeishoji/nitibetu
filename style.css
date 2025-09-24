@@ -11,6 +11,7 @@ body {
 /* 更新状況 */
 #update-row { margin-bottom: 8px;
   text-align:  left;
+  width:90%; margin:0 auto 10px; 
    }
 #update-label { font-size: 3.2vw; color:#666; }
 #update-status { font-size: 3.6vw; font-weight:600; margin-top:4px; }
