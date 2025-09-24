@@ -342,5 +342,17 @@ function createPieChart(counts){
           "rgba(109,194,181,1)",
           "rgba(109,158,217,1)"
           ];
-  pieChartInstance = new Chart(ctx, { type:'pie', data:{ labels:["1着","1.5着","2着","2.5着","3着","3.5着","4着"], datasets:[{ data:dataArr, backgroundColor: colors }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{position:'left'}} } });
+  pieChartInstance = new Chart(ctx, { type:'pie', data:{ labels:["1着","1.5着","2着","2.5着","3着","3.5着","4着"], datasets:[{ data:dataArr, backgroundColor: colors }] }, 
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      plugins:{
+        legend:{
+          display:true,
+          position:'left'
+        }
+      }
+    }
+  });
 }
+
