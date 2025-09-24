@@ -293,7 +293,7 @@ function renderGameList(games){
     // 左側: 時間
     const left = document.createElement("div");
     left.className = "card-left";
-    left.textContent = g.time || "-";
+    left.textContent = formatTimeHHMM(g.time);
 
     // 右側: 着順 + スコア
     const right = document.createElement("div");
