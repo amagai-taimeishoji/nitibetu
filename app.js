@@ -274,24 +274,55 @@ function renderGameList(games){
 }
 
 /* bar chart (center 0), CSS fixes the size; Chart.js animation disabled */
-function createBarChart(games){
+function createBarChart(scores) {
+  const ctx = document.getElementById("bar-chart").getContext("2d");
   if (barChartInstance) barChartInstance.destroy();
-  const ctx = barCanvas.getContext("2d");
-  const labels = games.map(g => g.time || "");
-  const values = games.map(g => Number(g.score || 0));
-  if (values.length === 0) { ctx.clearRect(0,0,barCanvas.width,barCanvas.height); return; }
-  const maxAbs = Math.max(10, Math.max(...values.map(v => Math.abs(v)))) * 1.2;
-  const bg = values.map(v => v >= 0 ? "rgba(76,175,80,0.9)" : "rgba(244,67,54,0.9)");
+
+  // ラベルを動的に生成
+  const labels = scores.map((_, idx) =>
+    idx === scores.length - 1 ? "最新" : `${scores.length - idx}`
+  );
+
+  const colors = labels.map((label, idx) =>
+    idx === labels.length - 1
+      ? "rgba(255, 206, 86, 0.9)" // 最新だけ黄色
+      : "rgba(186, 140, 255, 0.7)"
+  );
+
+  const values = scores.map(s => (s == null || isNaN(s) ? 0 : Number(s)));
+  const maxVal = Math.max(...values);
+  const minVal = Math.min(...values);
+  const maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal)) * 1.1;
 
   barChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "スコア",
+        data: values,
+        backgroundColor: colors
+      }]
+    },
     options: {
-      responsive:true,
-      maintainAspectRatio:false,
-      animation:false,
-      plugins:{ legend:{ display:false } },
-      scales:{ y:{ min:-maxAbs, max:maxAbs, ticks:{ stepSize: Math.ceil(maxAbs/5) } } }
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      layout: { padding: { top: 20, bottom: 20 } },
+      scales: {
+        x: {
+          ticks: {
+            autoSkip: false, // 全ラベル表示
+            maxRotation: 0,
+            minRotation: 0
+          }
+        },
+        y: {
+          min: -maxAbs,
+          max: maxAbs,
+          ticks: { stepSize: Math.ceil(maxAbs / 5) }
+        }
+      }
     }
   });
 }
