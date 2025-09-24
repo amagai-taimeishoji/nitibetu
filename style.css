@@ -80,7 +80,12 @@ body {
   }
   
 
-
+/* hide empty */
+.empty-cell { display:none; 
+  border: none !important; /* 空白セルだけ枠線を消す */
+  background: none !important;
+  }
+  
 /* responsive */
 @media (min-width:600px){
   #name-input { font-size:1rem; min-width:240px; }
