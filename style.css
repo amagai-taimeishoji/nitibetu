@@ -28,7 +28,7 @@ body {
   font-size:1rem;
   border:1px solid #ccc;
   border-radius:6px;
-  min-width:10rem; max-width:14rem;
+  min-width:8rem; max-width:10rem;
 }
 #search-button {
   background: linear-gradient(45deg,#4caf50,#81c784);
@@ -47,14 +47,14 @@ body {
   background: linear-gradient(45deg,#4caf50,#81c784);
   color:#fff;
   border:none; border-radius:8px;
-  padding:0.6rem 0.8rem;
-  font-size:1rem; cursor:pointer;
+  padding:1.2rem 1.6rem;
+  font-size:2rem; cursor:pointer;
 }
 .nav-btn[hidden]{ display:none; }
 
 #date-select {
-  padding:0.5rem 0.75rem;
-  font-size:1rem;
+  padding:1rem 1.5rem;
+  font-size:2rem;
   border-radius:6px; border:1px solid #ccc;
 }
 
