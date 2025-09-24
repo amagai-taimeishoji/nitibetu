@@ -383,8 +383,6 @@ function createBarChart(games) {
 }
 
 
-function createPieCha
-
 /* rank counts */
 function countRanks(games){
   const keys = ["1","1.5","2","2.5","3","3.5","4"];
