@@ -62,7 +62,6 @@ body {
 #loading-area {
   width:90%; margin:0.5rem auto;
   display:none; 
-  display: flex;
   flex-direction: column;
   text-align: center;
   align-items:center;
