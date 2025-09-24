@@ -290,18 +290,20 @@ function renderGameList(games){
     const card = document.createElement("div");
     card.className = "score-card";
 
+    // 左側: 時間
     const left = document.createElement("div");
     left.className = "card-left";
-    left.innerHTML = `
-      <div class="card-time">${formatTimeHHMM(g.time)}</div>
-      <div class="card-rank">${g.rank!=null ? g.rank + "着":"着順なし"}</div>
-    `;
+    left.textContent = g.time || "-";
 
+    // 右側: 着順 + スコア
     const right = document.createElement("div");
-    right.className = "card-score";
-    const scoreStr = (g.score==null || isNaN(g.score)) ? "データ不足" : 
-      `${Number(g.score).toFixed(Math.abs(g.score - Math.round(g.score))<1e-6 ? 0 : 1)}pt`;
-    right.textContent = scoreStr;
+    right.className = "card-right";
+    const scoreStr = (g.score==null || isNaN(g.score))
+      ? "データ不足"
+      : `${Number(g.score).toFixed(
+          Math.abs(g.score - Math.round(g.score))<1e-6 ? 0 : 1
+        )}pt`;
+    right.textContent = `${g.rank!=null ? g.rank+"着":"着順なし"}　${scoreStr}`;
 
     card.appendChild(left);
     card.appendChild(right);
