@@ -359,43 +359,50 @@ function createRankCountTable(counts){
     if (!cell||cell.toString().trim()==="") d.classList.add("empty-cell"); table.appendChild(d);
   }));
 }
-function createPieChart(data) {
-  const ctx = document.getElementById("pie-chart").getContext("2d");
+function createPieChart(counts) {
   if (pieChartInstance) pieChartInstance.destroy();
+  const ctx = pieCanvas.getContext("2d");
+
+  const keys = ["1","1.5","2","2.5","3","3.5","4"];
+  const values = keys.map(k => Number(counts?.[k] || 0));
+  const total = values.reduce((a,b) => a+b, 0);
+
+  // データが空なら 100%「データなし」
+  const isEmpty = total === 0;
+  const safeData = isEmpty ? [100] : values.map(v => v / total * 100);
+  const safeLabels = isEmpty ? ["データなし"] :
+    ["1着","1.5着","2着","2.5着","3着","3.5着","4着"];
+  const colors = isEmpty
+    ? ["rgba(200,200,200,0.8)"]
+    : [
+      "rgba(240,122,122,1)",
+      "rgba(160,160,160,1)",
+      "rgba(240,217,109,1)",
+      "rgba(190,190,190,1)",
+      "rgba(109,194,122,1)",
+      "rgba(140,140,140,1)",
+      "rgba(109,158,217,1)"
+    ];
 
   pieChartInstance = new Chart(ctx, {
     type: "pie",
     data: {
-      labels: ["1着率","1.5着率","2着率","2.5着率","3着率","3.5着率","4着率"],
-      datasets:[{
-        data:[
-          data["1着率"]*100,
-          data["1.5着率"]*100,
-          data["2着率"]*100,
-          data["2.5着率"]*100,
-          data["3着率"]*100,
-          data["3.5着率"]*100,
-          data["4着率"]*100
-        ],
-        backgroundColor:[
-          "rgba(240,122,122,1)",
-          "rgba(240,158,109,1)",
-          "rgba(240,217,109,1)",
-          "rgba(181,217,109,1)",
-          "rgba(109,194,122,1)",
-          "rgba(109,194,181,1)",
-          "rgba(109,158,217,1)"
-        ]
-      }]
+      labels: safeLabels,
+      datasets: [{ data: safeData, backgroundColor: colors }]
     },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{
-        legend:{
-          display:true,
-          position:'left'
-         }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { position: "left" },
+        tooltip: {
+          callbacks: {
+            label: ctx => isEmpty
+              ? "データなし"
+              : `${ctx.label}: ${ctx.raw.toFixed(1)}%`
+          }
+        }
       }
     }
   });
