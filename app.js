@@ -335,6 +335,13 @@ function createBarChart(games){
       animation: false,
       plugins: { legend: { display: false } },
       scales: {
+        x: {
+          ticks: {
+            maxRotation: 60,  // 最大回転角度（60度）
+            minRotation: 45,  // 最小回転角度（45度）
+            autoSkip: true,   // 自動で間引き（10個以上でも見やすく）
+          }
+        },
         y: {
           min: -maxAbs * 1.1,
           max: maxAbs * 1.1,
