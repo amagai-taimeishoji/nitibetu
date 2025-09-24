@@ -47,13 +47,13 @@ body {
   background: linear-gradient(45deg,#4caf50,#81c784);
   color:#fff;
   border:none; border-radius:8px;
-  padding:8rem 1.2rem;
+  padding:0.8rem 1.2rem;
   font-size:2rem; cursor:pointer;
 }
 .nav-btn[hidden]{ display:none; }
 
 #date-select {
-  padding:6.3rem 1.2rem;
+  padding:0.63rem 1.2rem;
   font-size:2rem;
   border-radius:6px; border:1px solid #ccc;
 }
