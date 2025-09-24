@@ -333,7 +333,7 @@ function createPieChart(counts){
   const dataArr = ["1","1.5","2","2.5","3","3.5","4"].map(k=>counts[k]||0);
   const total = dataArr.reduce((a,b)=>a+b,0);
   if (total===0){ ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height); return; }
-  const colors =
+  const colors =[
           "rgba(240,122,122,1)",
           "rgba(240,158,109,1)",
           "rgba(240,217,109,1)",
@@ -341,5 +341,6 @@ function createPieChart(counts){
           "rgba(109,194,122,1)",
           "rgba(109,194,181,1)",
           "rgba(109,158,217,1)"
+          ],
   pieChartInstance = new Chart(ctx, { type:'pie', data:{ labels:["1着","1.5着","2着","2.5着","3着","3.5着","4着"], datasets:[{ data:dataArr, backgroundColor: colors }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{position:'left'}} } });
 }
