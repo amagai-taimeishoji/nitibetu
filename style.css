@@ -61,7 +61,9 @@ body {
 /* Loading */
 #loading-area {
   width:90%; margin:0.5rem auto;
-  display:none; align-items:center; justify-content:center;
+  display:none; 
+  align-items:center;
+  justify-content:space-between;
   gap:0.5rem;
 }
 #loading-bar {
@@ -110,11 +112,11 @@ body {
 .header {
   font-weight:bold;
   background-color:#d0ebff;
-  font-size:0.9rem;
+  font-size:0.7rem;
 }
 .data {
   background-color:#fff;
-  font-size:1rem;
+  font-size:0.8rem;
   justify-content:flex-end;
   text-align:right;
   padding-right:0.5rem;
