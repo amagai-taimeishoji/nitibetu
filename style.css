@@ -72,12 +72,11 @@ body {
 }
 
 #pie-chart {
-  width: 85vw;
+  width: 90vw;
   height: 35vh !important;
-  margin-left: 10vw !important;
-  margin-right: auto;
-  margin-bottom: 20px;
-  }
+  margin: 0 auto 20px;
+  display: block;
+}
   
 
 /* hide empty */
