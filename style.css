@@ -63,7 +63,7 @@ body {
 
 /* Loading */
 #loading-area {
-  width:90%; margin:0.5rem auto;
+  width:90%; margin:1rem auto;
   display:none; 
   flex-direction: column;
   text-align: center;
@@ -72,7 +72,7 @@ body {
   gap:0.5rem;
 }
 #loading-bar {
-  width:60%; height:0.75rem;
+  width:80%; height:0.75rem;
   background:#f2f2f2;
   border-radius:8px;
   overflow:hidden; border:1px solid #ddd;
