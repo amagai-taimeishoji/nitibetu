@@ -10,7 +10,7 @@ body {
 
 /* 更新状況 */
 #update-row { margin-bottom: 8px;
-  margin-left:10px;
+  text-align:  left;
    }
 #update-label { font-size: 3.2vw; color:#666; }
 #update-status { font-size: 3.6vw; font-weight:600; margin-top:4px; }
