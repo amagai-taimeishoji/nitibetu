@@ -4,7 +4,7 @@ const YEAR = 2025;
 const MONTH = 10;
 const DAY_MIN = 1;
 const DAY_MAX = 30;
-const LOADING_DURATION_MS = 30000; // 15秒でMAX
+const LOADING_DURATION_MS = 30000; // 30秒でMAX
 // -------------------------------------------------------
 
 /* globals */
