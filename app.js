@@ -395,7 +395,8 @@ function createPieChart(counts){
       animation: false,
       plugins: {
         legend: {
-          position: " right",
+           display:true,
+          position: "left",
         },
         tooltip: {
           callbacks: {
