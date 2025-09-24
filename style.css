@@ -20,9 +20,8 @@ body {
 /* 名前行 */
 #name-row {
   display:flex; gap:0.5rem;
-  justify-content: left; align-items:center;
+  justify-content: center; align-items:center;
   margin:0.5rem 0;
-  margin-left:10vw;
 }
 #name-input {
   padding:0.5rem;
@@ -41,8 +40,9 @@ body {
 /* 日付行 */
 #date-row {
   display:flex; gap:0.5rem;
-  justify-content:center; align-items:center;
+  justify-content: right; align-items:center;
   margin-bottom:0.5rem;
+  margin-right:10vw;
 }
 .nav-btn {
   background: linear-gradient(45deg,#4caf50,#81c784);
