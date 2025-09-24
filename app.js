@@ -279,13 +279,14 @@ function createBarChart(games){
   const ctx = barCanvas.getContext("2d");
   const labels = games.map(g => g.time || "");
   const values = games.map(g => Number(g.score || 0));
-  if (values.length === 0) { ctx.clearRect(0,0,barCanvas.width,barCanvas.height); return; }
-  const maxAbs = Math.max(10, Math.max(...values.map(v => Math.abs(v)))) * 1.2;
-  const bg = values.map(v => v >= 0 ? "rgba(76,175,80,0.9)" : "rgba(244,67,54,0.9)");
+  const maxVal = Math.max(...reorderedScores.map(s => s || 0));
+  const minVal = Math.min(...reorderedScores.map(s => s || 0));
+  const maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal)) * 1.1;
+
 
   barChartInstance = new Chart(ctx, {
     type: "bar",
-    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
+    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },せ
     options: {
       responsive: true,
       maintainAspectRatio: true,
