@@ -1,5 +1,5 @@
 // ---------------- Config (必ず変更する) ----------------
-const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; //その月の exec URLに置き換え
+const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; // ← ここをあなたのGAS exec URLに
 const YEAR = 2025;
 const MONTH = 10;
 const DAY_MIN = 1;
@@ -54,7 +54,6 @@ function populateDateDropdown(year, month) {
 }
 
 function setInitialDate(){
-  // JST現在（文字列経由でタイムゾーンを合わせる）
   const nowStr = new Date().toLocaleString("en-US",{ timeZone: "Asia/Tokyo" });
   const nowJst = new Date(nowStr);
   let base = new Date(nowJst);
@@ -91,13 +90,10 @@ function updateNavButtons(){
 
 /* ========== Loading animation (15s, non-looping) ========== */
 function startLoading(){
-  // show loading UI
   loadingArea.style.display = "flex";
   loadingFill.style.width = "0%";
   loadingText.style.display = "block";
-  // set update-status to loading label
   updateStatusEl.textContent = "読み込みチュ…♡";
-  // start RAF based timer
   loadingStart = performance.now();
   cancelAnimationFrame(loadingRaf);
   loadingRaf = requestAnimationFrame(loadingTick);
@@ -109,7 +105,8 @@ function loadingTick(now){
   if (pct < 100) {
     loadingRaf = requestAnimationFrame(loadingTick);
   } else {
-    cancelAnimationFrame(loadingRaf);
+    // 100%到達時、自動で stopLoading を呼ぶ（要望対応）
+    stopLoading();
   }
 }
 function stopLoading(){
@@ -128,7 +125,6 @@ async function fetchAndRender({ triggeredBy="search" } = {}){
   if (!name) { alert("名前を入力してねっ"); return; }
   const dateParam = dateSelect.value; // yyyy/MM/dd
 
-  // start loading
   startLoading();
   resultsSection.style.display = "none";
 
@@ -146,45 +142,58 @@ async function fetchAndRender({ triggeredBy="search" } = {}){
     // server-provided status goes into update-status (after load)
     updateStatusEl.textContent = data.updateStatus || "ー";
 
-    // visitor & member
-    const all = data.all || data.allStats || [];
-    const uniqueCount = (data.集計人数 != null) ? data.集計人数 : all.filter(p => p.half>0).length;
+    // --- normalize 'all' so we always have english keys (half,total,high,avg,avgRank) ---
+    const rawAll = data.all || [];
+    const normalizedAll = rawAll.map(item => {
+      const half = Number(item["半荘数"] ?? item.half ?? (Array.isArray(item.games) ? item.games.length : 0)) || 0;
+      const total = Number(item["総スコア"] ?? item.total ?? 0) || 0;
+      const high = Number(item["最高スコア"] ?? item.high ?? 0) || 0;
+      const avg = Number(item["平均スコア"] ?? item.avg ?? (half ? total/half : 0)) || 0;
+      // 平均着順は null もありうる -> preserve null if not present
+      const avgRankRaw = (item["平均着順"] ?? item.avgRank ?? item["平均着順"]);
+      const avgRank = (avgRankRaw === undefined || avgRankRaw === null || avgRankRaw === "") ? null : Number(avgRankRaw);
+      return { name: item.name, half, total, high, avg, avgRank, raw: item };
+    });
+
+    // 集計人数（当日のゲームデータがある人の人数）
+    const uniqueCount = normalizedAll.filter(p => p.half > 0).length;
     visitorCountEl.textContent = `集計人数: ${uniqueCount} 人`;
     memberInfoEl.textContent = `No. ${data.no || "不明"}   ${data.name || ""}`;
 
-    // ranking maps
-    const rankMaps = buildAllRankMaps(all);
+    // ranking maps (use normalizedAll)
+    const rankMaps = buildAllRankMaps(normalizedAll);
 
-    // ranking (user only)
+    // ranking (user only) - safe lookup
+    const userName = data.name || name;
     const ranksRow = [
-      formatRankValue(rankMaps.half[data.name]),
-      formatRankValue(rankMaps.total[data.name]),
-      formatRankValue(rankMaps.high[data.name]),
-      formatRankValue(rankMaps.avg[data.name]),
-      formatRankValue(rankMaps.avgRank[data.name])
+      formatRankValue(rankMaps.half[userName]),
+      formatRankValue(rankMaps.total[userName]),
+      formatRankValue(rankMaps.high[userName]),
+      formatRankValue(rankMaps.avg[userName]),
+      formatRankValue(rankMaps.avgRank[userName])
     ];
     createTable("ranking-table", [
       ["累計半荘数\nランキング","総スコア\nランキング","最高スコア\nランキング","平均スコア\nランキング","平均着順\nランキング"],
       ranksRow
     ], 5);
 
-    // score summary
+    // score summary (data.summary may already be fine)
     const s = data.summary || {};
     createTable("scoredata-table",[["累計半荘数","総スコア","最高スコア","平均スコア","平均着順"],[
-      s.半荘数!=null ? `${s.半荘数}半荘` : "データなし",
-      s.総スコア!=null ? `${Number(s.総スコア).toFixed(1)}pt` : "データなし",
-      s.最高スコア!=null ? `${Number(s.最高スコア).toFixed(1)}pt` : "データなし",
-      s.平均スコア!=null ? `${Number(s.平均スコア).toFixed(3)}pt` : "データなし",
-      s.平均着順!=null ? `${Number(s.平均着順).toFixed(3)}位` : "データなし"
+      s.半荘数!=null ? `${s.半荘数}半荘` : (s.half!=null ? `${s.half}半荘` : "データなし"),
+      s.総スコア!=null ? `${Number(s.総スコア).toFixed(1)}pt` : (s.total!=null ? `${Number(s.total).toFixed(1)}pt` : "データなし"),
+      s.最高スコア!=null ? `${Number(s.最高スコア).toFixed(1)}pt` : (s.high!=null ? `${Number(s.high).toFixed(1)}pt` : "データなし"),
+      s.平均スコア!=null ? `${Number(s.平均スコア).toFixed(3)}pt` : (s.avg!=null ? `${Number(s.avg).toFixed(3)}pt` : "データなし"),
+      s.平均着順!=null ? `${Number(s.平均着順).toFixed(3)}位` : (s.avgRank!=null ? `${Number(s.avgRank).toFixed(3)}位` : "データなし")
     ]],5);
 
-    // games sorted by time
+    // games sorted by time (data.games is user's games)
     const games = (data.games || []).slice().sort((a,b) => parseTimeForSort(data.date,a.time) - parseTimeForSort(data.date,b.time));
     renderGameList(games);
 
-    // charts
+    // charts - use user's games for bar & pie
     createBarChart(games);
-    const rankCounts = countRanks(games);
+    const rankCounts = countRanks(games); // returns object with keys "1","1.5",...
     createRankCountTable(rankCounts);
     createPieChart(rankCounts);
 
@@ -200,23 +209,35 @@ async function fetchAndRender({ triggeredBy="search" } = {}){
 /* ========== Helpers (tables, charts, ranking) ========== */
 
 function parseTimeForSort(dateStr, timeStr){
+  // dateStr "yyyy/MM/dd", timeStr "HH:mm:ss" or ""
   if (!timeStr) return new Date(dateStr.replace(/\//g,'-') + 'T00:00:00+09:00').getTime();
+  // ensure two-digit hour/min/sec
   return new Date(dateStr.replace(/\//g,'-') + 'T' + timeStr + '+09:00').getTime();
 }
 
-function buildAllRankMaps(all){
-  const arr = all.slice();
+// buildAllRankMaps expects normalizedAll entries {name, half, total, high, avg, avgRank}
+function buildAllRankMaps(arr){
+  const list = arr.slice();
   function calc(key, asc=false){
-    const tmp = arr.map(a=>({name:a.name, val:(a[key]==null ? (asc? Infinity : -Infinity) : a[key])}));
+    const tmp = list.map(a=>{
+      let v = a[key];
+      if (v === null || v === undefined || isNaN(Number(v))) {
+        v = asc ? Infinity : -Infinity; // missing values go to the end
+      } else {
+        v = Number(v);
+      }
+      return { name: a.name, val: v };
+    });
     tmp.sort((x,y)=> asc ? x.val - y.val : y.val - x.val);
     const map = {};
     let prev = null, lastRank = 0;
     for (let i=0;i<tmp.length;i++){
       const it = tmp[i];
-      if (prev === it.val) {
+      if (prev !== null && it.val === prev) {
+        // same value as previous -> same rank
         map[it.name] = lastRank;
       } else {
-        lastRank = i+1;
+        lastRank = i + 1;
         map[it.name] = lastRank;
         prev = it.val;
       }
@@ -273,7 +294,7 @@ function renderGameList(games){
   });
 }
 
-/* bar chart (center 0), CSS fixes the size; Chart.js animation disabled */
+/* bar chart (center 0) */
 function createBarChart(games){
   if (barChartInstance) barChartInstance.destroy();
   const ctx = barCanvas.getContext("2d");
@@ -281,13 +302,12 @@ function createBarChart(games){
   const values = games.map(g => Number(g.score || 0));
   const maxVal = values.length ? Math.max(...values) : 0;
   const minVal = values.length ? Math.min(...values) : 0;
-  const baseAbs = Math.max(Math.abs(maxVal), Math.abs(minVal));
-  const maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal)) * 1.1;
+  let maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal));
+  if (maxAbs <= 0) maxAbs = 10; // 最低表示レンジ
+  // 色 - 最右が最新（配列は時間昇順なので最後が最新）
   const bg = values.map((_, i) =>
-  i === values.length - 1
-    ? "rgba(255, 206, 86, 0.95)"  // 最新: 黄色
-    : "rgba(186, 140, 255, 0.7)"  // それ以外: 紫
-);
+    i === values.length - 1 ? "rgba(255, 206, 86, 0.95)" : "rgba(186, 140, 255, 0.7)"
+  );
 
   barChartInstance = new Chart(ctx, {
     type: "bar",
@@ -295,26 +315,31 @@ function createBarChart(games){
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { top: 20, bottom: 20 } },
+      animation: false,
       plugins: { legend: { display: false } },
       scales: {
         y: {
-          min: -maxAbs,
-          max: maxAbs,
-          ticks: { stepSize: Math.ceil(maxAbs / 5) }
+          min: -maxAbs * 1.1,
+          max: maxAbs * 1.1,
+          ticks: { stepSize: Math.ceil((maxAbs*1.1) / 5) }
         }
       }
     }
   });
 }
 
-/* rank counts */
+/* rank counts from user's games */
 function countRanks(games){
   const keys = ["1","1.5","2","2.5","3","3.5","4"];
   const cnt = {}; keys.forEach(k=>cnt[k]=0);
-  games.forEach(g=>{ if (g.rank==null) return; const key = String(g.rank); if (cnt[key]!==undefined) cnt[key]++; });
+  games.forEach(g=>{
+    if (g.rank==null) return;
+    const key = String(g.rank);
+    if (cnt[key]!==undefined) cnt[key] += 1;
+  });
   return cnt;
 }
+
 function createRankCountTable(counts){
   const id="rank-count-table"; const table=document.getElementById(id); table.innerHTML="";
   const cols=4; table.style.gridTemplateColumns = `repeat(${cols}, 18vw)`;
@@ -327,19 +352,19 @@ function createRankCountTable(counts){
     if (!cell||cell.toString().trim()==="") d.classList.add("empty-cell"); table.appendChild(d);
   }));
 }
+
+/* pie chart: show 'データなし' slice when total===0 */
 function createPieChart(counts){
   if (pieChartInstance) pieChartInstance.destroy();
   const ctx = pieCanvas.getContext("2d");
   const keys = ["1","1.5","2","2.5","3","3.5","4"];
-  const dataArr = keys.map(k => counts[k] || 0);
+  const labels = ["1着","1.5着","2着","2.5着","3着","3.5着","4着"];
+  const dataArr = keys.map(k => Number(counts[k] || 0));
   const total = dataArr.reduce((a,b)=>a+b,0);
 
-  if (total===0){
-    ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height);
-    return;
-  }
-
-  const colors = [
+  let dataForChart = dataArr;
+  let labelsForChart = labels;
+  let colors = [
     "rgba(240,122,122,1)",
     "rgba(240,158,109,1)",
     "rgba(240,217,109,1)",
@@ -348,12 +373,19 @@ function createPieChart(counts){
     "rgba(109,194,181,1)",
     "rgba(109,158,217,1)"
   ];
-  
+
+  if (total === 0) {
+    // 全ゼロなら「データなし」を1スライスで表示（灰色）
+    dataForChart = [1];
+    labelsForChart = ["データなし"];
+    colors = ["rgba(200,200,200,0.9)"];
+  }
+
   pieChartInstance = new Chart(ctx, {
     type: "pie",
     data:{
-      labels:["1着","1.5着","2着","2.5着","3着","3.5着","4着"],
-      datasets:[{ data:dataArr, backgroundColor: colors }]
+      labels: labelsForChart,
+      datasets:[{ data: dataForChart, backgroundColor: colors }]
     },
     options:{
       responsive:true,
@@ -365,7 +397,9 @@ function createPieChart(counts){
           callbacks:{
             label:function(context){
               const value = context.raw || 0;
-              const pct = ((value / total) * 100).toFixed(1);
+              // total===0 の場合は1で描画しているのでパーセンテージは100%
+              const denom = (total === 0) ? 1 : total;
+              const pct = ((value / denom) * 100).toFixed(1);
               return `${context.label}: ${value}回 (${pct}%)`;
             }
           }
