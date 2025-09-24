@@ -286,7 +286,7 @@ function createBarChart(games){
 
   barChartInstance = new Chart(ctx, {
     type: "bar",
-    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },せ
+    data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
     options: {
       responsive: true,
       maintainAspectRatio: true,
