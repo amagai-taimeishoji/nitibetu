@@ -59,40 +59,32 @@ body {
 /* カード全体 */
 .score-card {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* 左右に配置 */
   align-items: center;
-  background: #ffffff;          /* 白ベース */
-  border-radius: 8px;           /* 角を丸く */
+  background: #ffffff;
+  border-radius: 8px;
   padding: 10px 16px;
-  margin: 8px 0;                /* 縦に並べる間隔 */
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15); /* 立体感 */
+  margin: 8px 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* hover時に少し浮く */
 .score-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-/* 左側（番号と時間） */
-.score-card .card-left {
-  font-size: 14px;
-  color: #333;
+/* 左（時間） */
+.card-left {
+  font-family: monospace;
+  font-size: 15px;
   font-weight: bold;
+  color: #333;
 }
 
-/* 時間を強調 */
-.score-card .card-left .card-time {
-  font-family: monospace; /* 時刻をそろえやすく */
-  margin-left: 6px;
-  font-weight: normal;
-  color: #555;
-}
-
-/* 右側（スコアと順位） */
-.score-card div:last-child {
-  font-size: 14px;
+/* 右（着順とスコア） */
+.card-right {
+  font-size: 15px;
   color: #444;
   font-weight: 500;
 }
