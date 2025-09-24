@@ -95,7 +95,7 @@ body {
 /* 見出しボックス */
 .box15,.box16,.box17,.box18 {
   padding:0.5rem 1rem;
-  max-width:90%; width:90%;
+  max-width:90vw; width:90vw;
   height:2rem;
   display:flex; justify-content:center; align-items:center;
   background: repeating-linear-gradient(-45deg,#f0f8ff,#f0f8ff 3px,#e9f4ff 3px,#e9f4ff 7px);
