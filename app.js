@@ -1,5 +1,5 @@
 // ---------------- Config (必ず変更する) ----------------
-const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; // ← ここをあなたのGAS exec URLに
+const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; // ← あなたのGAS exec URLに置き換え
 const YEAR = 2025;
 const MONTH = 10;
 const DAY_MIN = 1;
@@ -35,6 +35,9 @@ const rankCountTable = document.getElementById("rank-count-table");
 const pieCanvas = document.getElementById("pie-chart");
 
 /* init */
+// hide update-status initially (we'll show it only after data is fetched)
+if (updateStatusEl) updateStatusEl.style.display = "none";
+
 populateDateDropdown(YEAR, MONTH);
 setInitialDate();
 attachEvents();
@@ -54,6 +57,7 @@ function populateDateDropdown(year, month) {
 }
 
 function setInitialDate(){
+  // JST現在（文字列経由でタイムゾーンを合わせる）
   const nowStr = new Date().toLocaleString("en-US",{ timeZone: "Asia/Tokyo" });
   const nowJst = new Date(nowStr);
   let base = new Date(nowJst);
@@ -90,10 +94,15 @@ function updateNavButtons(){
 
 /* ========== Loading animation (15s, non-looping) ========== */
 function startLoading(){
+  // show loading UI
   loadingArea.style.display = "flex";
   loadingFill.style.width = "0%";
   loadingText.style.display = "block";
-  updateStatusEl.textContent = "読み込みチュ…♡";
+  // IMPORTANT: Do NOT show or change updateStatus here.
+  // We intentionally hide updateStatus while loading so that "更新状況" is only shown with returned data.
+  if (updateStatusEl) updateStatusEl.style.display = "none";
+
+  // start RAF based timer
   loadingStart = performance.now();
   cancelAnimationFrame(loadingRaf);
   loadingRaf = requestAnimationFrame(loadingTick);
@@ -105,12 +114,14 @@ function loadingTick(now){
   if (pct < 100) {
     loadingRaf = requestAnimationFrame(loadingTick);
   } else {
-    // 100%到達時、自動で stopLoading を呼ぶ（要望対応）
+    // auto stop when reaching 100%
     stopLoading();
   }
 }
 function stopLoading(){
+  // stop RAF
   cancelAnimationFrame(loadingRaf);
+  // animate to full then hide
   loadingFill.style.width = "100%";
   setTimeout(()=>{
     loadingArea.style.display = "none";
@@ -125,6 +136,7 @@ async function fetchAndRender({ triggeredBy="search" } = {}){
   if (!name) { alert("名前を入力してねっ"); return; }
   const dateParam = dateSelect.value; // yyyy/MM/dd
 
+  // start loading UI
   startLoading();
   resultsSection.style.display = "none";
 
@@ -134,74 +146,74 @@ async function fetchAndRender({ triggeredBy="search" } = {}){
     const data = await res.json();
 
     if (data.error) {
+      // show update-status (with error) at same timing as other data
+      if (updateStatusEl) {
+        updateStatusEl.textContent = data.error;
+        updateStatusEl.style.display = "block";
+      }
       stopLoading();
-      updateStatusEl.textContent = data.error;
       return;
     }
 
-    // server-provided status goes into update-status (after load)
-    updateStatusEl.textContent = data.updateStatus || "ー";
+    // At this point we have data: show update-status now (same timing as other UI updates)
+    if (updateStatusEl) {
+      updateStatusEl.textContent = data.updateStatus || "ー";
+      updateStatusEl.style.display = "block";
+    }
 
-    // --- normalize 'all' so we always have english keys (half,total,high,avg,avgRank) ---
-    const rawAll = data.all || [];
-    const normalizedAll = rawAll.map(item => {
-      const half = Number(item["半荘数"] ?? item.half ?? (Array.isArray(item.games) ? item.games.length : 0)) || 0;
-      const total = Number(item["総スコア"] ?? item.total ?? 0) || 0;
-      const high = Number(item["最高スコア"] ?? item.high ?? 0) || 0;
-      const avg = Number(item["平均スコア"] ?? item.avg ?? (half ? total/half : 0)) || 0;
-      // 平均着順は null もありうる -> preserve null if not present
-      const avgRankRaw = (item["平均着順"] ?? item.avgRank ?? item["平均着順"]);
-      const avgRank = (avgRankRaw === undefined || avgRankRaw === null || avgRankRaw === "") ? null : Number(avgRankRaw);
-      return { name: item.name, half, total, high, avg, avgRank, raw: item };
-    });
-
-    // 集計人数（当日のゲームデータがある人の人数）
-    const uniqueCount = normalizedAll.filter(p => p.half > 0).length;
+    // visitor & member
+    const all = data.all || data.allStats || [];
+    const uniqueCount = (data.集計人数 != null) ? data.集計人数 : all.filter(p => p.half>0).length;
     visitorCountEl.textContent = `集計人数: ${uniqueCount} 人`;
     memberInfoEl.textContent = `No. ${data.no || "不明"}   ${data.name || ""}`;
 
-    // ranking maps (use normalizedAll)
-    const rankMaps = buildAllRankMaps(normalizedAll);
+    // ranking maps
+    const rankMaps = buildAllRankMaps(all);
 
-    // ranking (user only) - safe lookup
-    const userName = data.name || name;
+    // ranking (user only)
     const ranksRow = [
-      formatRankValue(rankMaps.half[userName]),
-      formatRankValue(rankMaps.total[userName]),
-      formatRankValue(rankMaps.high[userName]),
-      formatRankValue(rankMaps.avg[userName]),
-      formatRankValue(rankMaps.avgRank[userName])
+      formatRankValue(rankMaps.half[data.name]),
+      formatRankValue(rankMaps.total[data.name]),
+      formatRankValue(rankMaps.high[data.name]),
+      formatRankValue(rankMaps.avg[data.name]),
+      formatRankValue(rankMaps.avgRank[data.name])
     ];
     createTable("ranking-table", [
       ["累計半荘数\nランキング","総スコア\nランキング","最高スコア\nランキング","平均スコア\nランキング","平均着順\nランキング"],
       ranksRow
     ], 5);
 
-    // score summary (data.summary may already be fine)
+    // score summary
     const s = data.summary || {};
     createTable("scoredata-table",[["累計半荘数","総スコア","最高スコア","平均スコア","平均着順"],[
-      s.半荘数!=null ? `${s.半荘数}半荘` : (s.half!=null ? `${s.half}半荘` : "データなし"),
-      s.総スコア!=null ? `${Number(s.総スコア).toFixed(1)}pt` : (s.total!=null ? `${Number(s.total).toFixed(1)}pt` : "データなし"),
-      s.最高スコア!=null ? `${Number(s.最高スコア).toFixed(1)}pt` : (s.high!=null ? `${Number(s.high).toFixed(1)}pt` : "データなし"),
-      s.平均スコア!=null ? `${Number(s.平均スコア).toFixed(3)}pt` : (s.avg!=null ? `${Number(s.avg).toFixed(3)}pt` : "データなし"),
-      s.平均着順!=null ? `${Number(s.平均着順).toFixed(3)}位` : (s.avgRank!=null ? `${Number(s.avgRank).toFixed(3)}位` : "データなし")
+      s.半荘数!=null ? `${s.半荘数}半荘` : "データなし",
+      s.総スコア!=null ? `${Number(s.総スコア).toFixed(1)}pt` : "データなし",
+      s.最高スコア!=null ? `${Number(s.最高スコア).toFixed(1)}pt` : "データなし",
+      s.平均スコア!=null ? `${Number(s.平均スコア).toFixed(3)}pt` : "データなし",
+      s.平均着順!=null ? `${Number(s.平均着順).toFixed(3)}位` : "データなし"
     ]],5);
 
-    // games sorted by time (data.games is user's games)
+    // games sorted by time
     const games = (data.games || []).slice().sort((a,b) => parseTimeForSort(data.date,a.time) - parseTimeForSort(data.date,b.time));
     renderGameList(games);
 
-    // charts - use user's games for bar & pie
+    // charts
     createBarChart(games);
-    const rankCounts = countRanks(games); // returns object with keys "1","1.5",...
+    const rankCounts = countRanks(games);
     createRankCountTable(rankCounts);
     createPieChart(rankCounts);
 
+    // reveal results and stop loading animation (stopLoading hides loadingArea after short delay)
     resultsSection.style.display = "block";
     stopLoading();
+
   } catch (err) {
+    // show error in update-status area (same timing) and stop loading
+    if (updateStatusEl) {
+      updateStatusEl.textContent = `成績更新チュ♡今は見れません (${err.message})`;
+      updateStatusEl.style.display = "block";
+    }
     stopLoading();
-    updateStatusEl.textContent = `成績更新チュ♡今は見れません (${err.message})`;
     console.error(err);
   }
 }
@@ -209,35 +221,23 @@ async function fetchAndRender({ triggeredBy="search" } = {}){
 /* ========== Helpers (tables, charts, ranking) ========== */
 
 function parseTimeForSort(dateStr, timeStr){
-  // dateStr "yyyy/MM/dd", timeStr "HH:mm:ss" or ""
   if (!timeStr) return new Date(dateStr.replace(/\//g,'-') + 'T00:00:00+09:00').getTime();
-  // ensure two-digit hour/min/sec
   return new Date(dateStr.replace(/\//g,'-') + 'T' + timeStr + '+09:00').getTime();
 }
 
-// buildAllRankMaps expects normalizedAll entries {name, half, total, high, avg, avgRank}
-function buildAllRankMaps(arr){
-  const list = arr.slice();
+function buildAllRankMaps(all){
+  const arr = all.slice();
   function calc(key, asc=false){
-    const tmp = list.map(a=>{
-      let v = a[key];
-      if (v === null || v === undefined || isNaN(Number(v))) {
-        v = asc ? Infinity : -Infinity; // missing values go to the end
-      } else {
-        v = Number(v);
-      }
-      return { name: a.name, val: v };
-    });
+    const tmp = arr.map(a=>({name:a.name, val:(a[key]==null ? (asc? Infinity : -Infinity) : a[key])}));
     tmp.sort((x,y)=> asc ? x.val - y.val : y.val - x.val);
     const map = {};
     let prev = null, lastRank = 0;
     for (let i=0;i<tmp.length;i++){
       const it = tmp[i];
-      if (prev !== null && it.val === prev) {
-        // same value as previous -> same rank
+      if (prev === it.val) {
         map[it.name] = lastRank;
       } else {
-        lastRank = i + 1;
+        lastRank = i+1;
         map[it.name] = lastRank;
         prev = it.val;
       }
@@ -284,62 +284,64 @@ function renderGameList(games){
     card.className = "score-card";
     const left = document.createElement("div");
     left.className = "card-left";
-    left.innerHTML = `<strong>${i+1}.</strong> <span style="min-width:60px;display:inline-block">${g.time || "-"}</span>`;
+    left.innerHTML = `<strong class="idx">${i+1}.</strong> <span class="time">${formatHM(g.time||"-")}</span>`;
     const right = document.createElement("div");
-    const scoreStr = (g.score==null || isNaN(g.score)) ? "データ不足" : `${Number(g.score).toFixed(Math.abs(g.score - Math.round(g.score))<1e-6 ? 0 : 1)}pt`;
-    right.innerHTML = `<span>${scoreStr}</span>&nbsp;&nbsp;<span>${g.rank!=null ? g.rank + "着":"着順なし"}</span>`;
+    const decimals = (g.score==null || isNaN(g.score)) ? 0 : ((Math.abs(g.score - Math.round(g.score))<1e-6) ? 0 : 1);
+    const scoreStr = (g.score==null || isNaN(g.score)) ? "データ不足" : `${g.score >= 0 ? "+" : ""}${Number(g.score).toFixed(decimals)}pt`;
+    const scoreSpan = document.createElement("span");
+    scoreSpan.textContent = scoreStr;
+    scoreSpan.className = (g.score>=0) ? "score-positive" : "score-negative";
+    const rankSpan = document.createElement("span");
+    rankSpan.className = "rank-badge";
+    rankSpan.textContent = g.rank!=null ? `${g.rank}着` : "着順なし";
+    right.appendChild(scoreSpan);
+    right.appendChild(rankSpan);
     card.appendChild(left);
     card.appendChild(right);
     tenhanList.appendChild(card);
   });
 }
 
+function formatHM(timeStr){
+  if (!timeStr) return "-";
+  if (typeof timeStr === "string") {
+    const p = timeStr.split(":");
+    if (p.length >= 2) return `${String(p[0]).padStart(2,"0")}:${String(p[1]).padStart(2,"0")}`;
+  }
+  const d = new Date(timeStr);
+  if (!isNaN(d)) return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  return String(timeStr);
+}
+
 /* bar chart (center 0) */
 function createBarChart(games){
   if (barChartInstance) barChartInstance.destroy();
   const ctx = barCanvas.getContext("2d");
-  const labels = games.map(g => g.time || "");
+  const labels = games.map(g => formatHM(g.time || "-"));
   const values = games.map(g => Number(g.score || 0));
-  const maxVal = values.length ? Math.max(...values) : 0;
-  const minVal = values.length ? Math.min(...values) : 0;
-  let maxAbs = Math.max(Math.abs(maxVal), Math.abs(minVal));
-  if (maxAbs <= 0) maxAbs = 10; // 最低表示レンジ
-  // 色 - 最右が最新（配列は時間昇順なので最後が最新）
-  const bg = values.map((_, i) =>
-    i === values.length - 1 ? "rgba(255, 206, 86, 0.95)" : "rgba(186, 140, 255, 0.7)"
-  );
-
+  const absVals = values.length ? values.map(v => Math.abs(v)) : [10];
+  const maxAbs = Math.max(10, ...absVals) * 1.1;
+  const bg = values.map((_, i) => i === values.length - 1 ? "rgba(255,206,86,0.95)" : "rgba(186,140,255,0.7)");
   barChartInstance = new Chart(ctx, {
-    type: "bar",
+    type: 'bar',
     data: { labels, datasets: [{ label: 'スコア', data: values, backgroundColor: bg }] },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: {
-          min: -maxAbs * 1.1,
-          max: maxAbs * 1.1,
-          ticks: { stepSize: Math.ceil((maxAbs*1.1) / 5) }
-        }
-      }
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ min:-maxAbs, max:maxAbs, ticks:{ stepSize: Math.ceil(maxAbs/5) } } }
     }
   });
 }
 
-/* rank counts from user's games */
+/* rank counts */
 function countRanks(games){
   const keys = ["1","1.5","2","2.5","3","3.5","4"];
   const cnt = {}; keys.forEach(k=>cnt[k]=0);
-  games.forEach(g=>{
-    if (g.rank==null) return;
-    const key = String(g.rank);
-    if (cnt[key]!==undefined) cnt[key] += 1;
-  });
+  games.forEach(g=>{ if (g.rank==null) return; const key = String(g.rank); if (cnt[key]!==undefined) cnt[key]++; });
   return cnt;
 }
-
 function createRankCountTable(counts){
   const id="rank-count-table"; const table=document.getElementById(id); table.innerHTML="";
   const cols=4; table.style.gridTemplateColumns = `repeat(${cols}, 18vw)`;
@@ -352,62 +354,17 @@ function createRankCountTable(counts){
     if (!cell||cell.toString().trim()==="") d.classList.add("empty-cell"); table.appendChild(d);
   }));
 }
-
-/* pie chart: show 'データなし' slice when total===0 */
 function createPieChart(counts){
-  const pieCanvas = document.getElementById("pie-chart");
-  if (!pieCanvas) {
-    console.error("pieCanvas not found!");
-    return;
-  }
+  if (pieChartInstance) pieChartInstance.destroy();
   const ctx = pieCanvas.getContext("2d");
-  
   const keys = ["1","1.5","2","2.5","3","3.5","4"];
   const dataArr = keys.map(k => counts[k] || 0);
   const total = dataArr.reduce((a,b)=>a+b,0);
-
-  if (pieChartInstance) {
-    pieChartInstance.destroy();
-  }
-
-  const colors = [
-    "rgba(240,122,122,1)",
-    "rgba(240,158,109,1)",
-    "rgba(240,217,109,1)",
-    "rgba(181,217,109,1)",
-    "rgba(109,194,122,1)",
-    "rgba(109,194,181,1)",
-    "rgba(109,158,217,1)"
-  ];
-
+  if (total===0){ ctx.clearRect(0,0,pieCanvas.width,pieCanvas.height); return; }
+  const colors = ["rgba(240,122,122,1)","rgba(240,158,109,1)","rgba(240,217,109,1)","rgba(181,217,109,1)","rgba(109,194,122,1)","rgba(109,194,181,1)","rgba(109,158,217,1)"];
   pieChartInstance = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: ["1着","1.5着","2着","2.5着","3着","3.5着","4着"],
-      datasets: [{
-        data: dataArr,
-        backgroundColor: colors
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false,
-      plugins: {
-        legend: {
-          position: "left",
-          labels: { boxWidth: 12 }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context){
-              const value = context.raw || 0;
-              const pct = total ? ((value / total) * 100).toFixed(1) : 0;
-              return `${context.label}: ${value}回 (${pct}%)`;
-            }
-          }
-        }
-      }
-    }
+    type:'pie',
+    data:{ labels:["1着","1.5着","2着","2.5着","3着","3.5着","4着"], datasets:[{ data:dataArr, backgroundColor: colors }] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{position:'left'}} }
   });
 }
