@@ -165,11 +165,12 @@ body {
   height: 25vh !important;
 }
 #pie-chart {
-  width: 90%;
-  height: 35vh;
+  width: 85vw;
+  height: 35vh;   /* ←ここ重要！ */
   display: block;
-  margin:0 auto;
+  margin-left:10px
 }
+  
 
 /* 空セルは非表示 */
 .empty-cell {
