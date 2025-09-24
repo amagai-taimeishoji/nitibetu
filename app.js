@@ -1,7 +1,5 @@
 // ---------------- Config (必ず変更する) ----------------
 const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec"; //その月の exec URLに置き換え
-// ---------------- Config (必ず変更する) ----------------
-const API_URL = "https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec"; // ← あなたのGAS exec URLに置き換え
 const YEAR = 2025;
 const MONTH = 10;
 const DAY_MIN = 1;
