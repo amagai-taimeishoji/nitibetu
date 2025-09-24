@@ -71,7 +71,7 @@ body {
 
 #pie-chart {
   width: 85vw;
-  max-width: calc(90vw - 5vw);
+  height: 35vh !important;
   margin-left: 10vw !important;
   margin-right: auto;
   margin-bottom: 20px;
