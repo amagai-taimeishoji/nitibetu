@@ -349,7 +349,6 @@ function createPieChart(counts){
     "rgba(109,158,217,1)"
   ];
   
-  const safe = key => (data[key] != null ? Number(data[key]) * 100 : 0);
   pieChartInstance = new Chart(ctx, {
     type: "pie",
     data:{
