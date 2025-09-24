@@ -56,43 +56,46 @@ body {
 .header { font-weight:bold; background-color:#d0ebff; font-size:2.5vw; text-align:center; }
 .data { background-color:white; font-size:3vw; justify-content:flex-end; text-align:right; padding-right:6px; }
 
+/* カード全体 */
 .score-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  margin: 8px auto;
-  width: 90%;
-  border-radius: 10px;
-  background: #f9f9ff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  font-size: 3.2vw;
+  background: #ffffff;          /* 白ベース */
+  border-radius: 8px;           /* 角を丸く */
+  padding: 10px 16px;
+  margin: 8px 0;                /* 縦に並べる間隔 */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15); /* 立体感 */
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.card-left {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+/* hover時に少し浮く */
+.score-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-.card-time {
-  font-weight: bold;
-  font-size: 3.4vw;
+/* 左側（番号と時間） */
+.score-card .card-left {
+  font-size: 14px;
   color: #333;
-  min-width: 60px;
+  font-weight: bold;
 }
 
-.card-rank {
-  font-size: 3.2vw;
-  color: #666;
+/* 時間を強調 */
+.score-card .card-left .card-time {
+  font-family: monospace; /* 時刻をそろえやすく */
+  margin-left: 6px;
+  font-weight: normal;
+  color: #555;
 }
 
-.card-score {
-  font-size: 3.6vw;
-  font-weight: 600;
-  color: #2a5adf;
+/* 右側（スコアと順位） */
+.score-card div:last-child {
+  font-size: 14px;
+  color: #444;
+  font-weight: 500;
 }
-
 
 /* グラフ */
 .chart-wrap { width:100%; display:flex; justify-content:center; margin-bottom:20px; }
