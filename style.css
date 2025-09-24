@@ -54,7 +54,7 @@ body {
 .nav-btn[hidden]{ display:none; }
 
 #date-select {
-  padding:0.63rem 1rem;
+  padding:0.7rem 0.8rem;
   font-size:2rem;
   border-radius:6px; border:1px solid #ccc;
 }
