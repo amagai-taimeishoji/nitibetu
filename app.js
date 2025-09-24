@@ -345,10 +345,8 @@ function createPieChart(counts){
   
   pieChartInstance = new Chart(ctx, {
     type: "pie",
-    data: {
-      labels: labels,
-      datasets: [{ data: percents, backgroundColor: colors }]
-    },
+    data:{ labels:["1着","1.5着","2着","2.5着","3着","3.5着","4着"], 
+    datasets:[{ data:dataArr, backgroundColor: colors }] },
     options: {
       responsive: true,
       maintainAspectRatio: false, // CSSで高さ固定
