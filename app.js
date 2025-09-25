@@ -1,12 +1,5 @@
 "use strict";
 
-/**
- * app.js — 麻雀 日別成績ビューア
- *
- * 機能・レイアウトを変えずに、可読性を高めるために改行と日本語コメントで整理した完全版。
- * そのまま置き換えて使ってください。
- */
-
 /* ---------------- 設定（必ず確認・変更する部分） ---------------- */
 // Google Apps Script の公開 exec URL（各自のものに差し替えてください）
 const API_URL = "https://script.google.com/macros/s/AKfycbxq6zDK7Dkcmew5dHvj6bVr0kJLWnT0Ef75NEW6UASAU2gYWMt4Yr4eMKUAU28cOrSQ/exec";
