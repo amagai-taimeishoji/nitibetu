@@ -191,6 +191,7 @@ body {
   text-align: left;
   margin-left: 7vw;
   margin-bottom: 1rem;
+  margin-top: -1rem;
 }
 
 /* 大画面向け調整 */
