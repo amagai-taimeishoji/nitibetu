@@ -20,6 +20,7 @@ let barChartInstance = null;
 let pieChartInstance = null;
 let loadingStart = null;
 let loadingRaf = null;
+let waitingForData = false;  // データ待ち状態フラグ
 
 /* ---------------- DOM 要素（事前に HTML 内で定義されている想定） ---------------- */
 const updateStatusEl = document.getElementById("update-status");
@@ -158,12 +159,12 @@ function startLoading() {
   loadingText.style.display = "block";
   updateStatusEl.textContent = "────────";
 
+  waitingForData = true;  // データ取得を待機中にセット
   loadingStart = performance.now();
   cancelAnimationFrame(loadingRaf);
   loadingRaf = requestAnimationFrame(loadingTick);
 }
-
-function loadingTick(now) {
+function loadingTick(now){
   const elapsed = now - loadingStart;
   const pct = Math.min(100, (elapsed / LOADING_DURATION_MS) * 100);
   loadingFill.style.width = pct + "%";
@@ -171,8 +172,13 @@ function loadingTick(now) {
   if (pct < 100) {
     loadingRaf = requestAnimationFrame(loadingTick);
   } else {
-    // 100% 到達時に自動で stopLoading を呼ぶ
-    stopLoading();
+    if (waitingForData) {
+      // データまだ来てない → 表示を切り替える（要望の文言に変更）
+      loadingText.textContent = "もうちょっとまってほしい！";
+      // stopLoading() は呼ばない（そのままデータ到着を待つ）
+    } else {
+      stopLoading();
+    }
   }
 }
 
@@ -210,6 +216,8 @@ async function fetchAndRender({ triggeredBy = "search" } = {}) {
     const url = `${API_URL}?name=${encodeURIComponent(name)}&date=${encodeURIComponent(dateParam)}`;
     const res = await fetch(url);
     const data = await res.json();
+    waitingForData = false;   // フラグ解除
+    stopLoading();
 
     if (data.error) {
       // API 側でエラーが返った場合は stop & メッセージ
@@ -595,7 +603,7 @@ function createPieChart(counts) {
   // 以前のインスタンスを破棄（あれば）
   if (pieChartInstance) pieChartInstance.destroy();
 
-  // 色配列（整数着は濃いめ・小数着は薄めに分けたい場合はここで調整）
+  // 色配列
   const colors = [
     "rgba(240,122,122,1)",
     "rgba(240,158,109,1)",
