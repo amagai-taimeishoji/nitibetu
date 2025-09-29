@@ -11,7 +11,7 @@ const DAY_MIN = 1;
 const DAY_MAX = 30;
 
 // ローディングアニメーションの最大時間（ミリ秒）
-const LOADING_DURATION_MS = 25000; // 
+const LOADING_DURATION_MS = 20000; // 
 /* ----------------------------------------------------------------- */
 
 
