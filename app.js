@@ -503,6 +503,7 @@ function createBarChart(games) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 20, bottom: 20 } },
       animation: false,
       plugins: {
         legend: { display: false }
@@ -517,11 +518,11 @@ function createBarChart(games) {
           }
         },
         y: {
-          min: -maxAbs * 1.1,
-          max: maxAbs * 1.1,
+          min: -maxAbs,
+          max: maxAbs,
           ticks: {
             // 目盛りはおおよそ 5 分割になるよう step を設定
-            stepSize: Math.ceil((maxAbs * 1.1) / 5)
+            stepSize: Math.ceil(maxAbs / 5)
           }
         }
       }
