@@ -104,11 +104,12 @@ body {
 
 /* テーブル（グリッド） */
 .table {
-  display:grid; width:95%;
+  display:grid; width:100%;
   grid-auto-rows:2.2rem;
   border-radius:4px;
   overflow:hidden;
   margin:0 auto 1.5rem;
+  margin-left:10vw
 }
 .table div {
   border:0.5px solid #555;
