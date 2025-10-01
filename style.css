@@ -167,7 +167,7 @@ body {
 #bar-chart {
   width: 100%;
   max-width: 90%;
-  height: 25vh !important;
+  height: 15vh !important;
 }
 #pie-chart {
   width: 85vw;
