@@ -490,7 +490,7 @@ function createBarChart(games) {
     i === values.length - 1 ? "rgba(255, 206, 86, 0.95)" : "rgba(186, 140, 255, 0.7)"
   );
 
-  // Chart.js インスタンス生成
+    // Chart.js インスタンス生成
   barChartInstance = new Chart(ctx, {
     type: "bar",
     data: {
@@ -504,7 +504,6 @@ function createBarChart(games) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { top: 20, bottom: 20 } },
       animation: false,
       plugins: {
         legend: { display: false }
@@ -519,11 +518,11 @@ function createBarChart(games) {
           }
         },
         y: {
-          min: -maxAbs,
-          max: maxAbs,
+          min: -maxAbs * 1.1,
+          max: maxAbs * 1.1,
           ticks: {
             // 目盛りはおおよそ 5 分割になるよう step を設定
-            stepSize: Math.ceil(maxAbs / 5)
+            stepSize: Math.ceil((maxAbs * 1.1) / 5)
           }
         }
       }
