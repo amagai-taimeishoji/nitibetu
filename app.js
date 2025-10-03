@@ -260,7 +260,8 @@ async function fetchAndRender({ triggeredBy = "search" } = {}) {
     memberInfoEl.textContent = `No. ${data.no || "不明"}   ${data.name || ""}`;
 
     /* ---------- ランキング計算（全員分） ---------- */
-    const rankMaps = buildAllRankMaps(normalizedAll);
+    // 半荘数 > 0 の人だけランキング対象にする
+    const rankMaps = buildAllRankMaps(normalizedAll.filter(p => p.half > 0));
 
     // 表示する自分の名前（API が返す name を優先）
     const userName = data.name || name;
