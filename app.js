@@ -8,7 +8,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxWOooLuN6YrXJRlAo77CIu
 const YEAR = 2025;
 const MONTH = 10;
 const DAY_MIN = 1;
-const DAY_MAX = 30;
+const DAY_MAX = 31;
 
 // ローディングアニメーションの最大時間（ミリ秒）
 const LOADING_DURATION_MS = 20000; // 
